@@ -1,0 +1,14 @@
+F:\TypeBeat\TypeBeat.Resources\bin\Debug\net8.0\TypeBeat.Resources.deps.json
+F:\TypeBeat\TypeBeat.Resources\bin\Debug\net8.0\TypeBeat.Resources.dll
+F:\TypeBeat\TypeBeat.Resources\bin\Debug\net8.0\TypeBeat.Resources.pdb
+F:\TypeBeat\TypeBeat.Resources\bin\Debug\net8.0\TypeBeat.Resources.xml
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\TypeBeat.Resources.GeneratedMSBuildEditorConfig.editorconfig
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\TypeBeat.Resources.AssemblyInfoInputs.cache
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\TypeBeat.Resources.AssemblyInfo.cs
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\TypeBeat.Resources.csproj.CoreCompileInputs.cache
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\TypeBeat.Resources.sourcelink.json
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\TypeBeat.Resources.dll
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\refint\TypeBeat.Resources.dll
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\TypeBeat.Resources.xml
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\TypeBeat.Resources.pdb
+F:\TypeBeat\TypeBeat.Resources\obj\Debug\net8.0\ref\TypeBeat.Resources.dll
