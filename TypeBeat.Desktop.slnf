@@ -1,0 +1,11 @@
+﻿{
+  "solution": {
+    "path": "TypeBeat.sln",
+    "projects": [
+      "TypeBeat.Desktop\\TypeBeat.Desktop.csproj",
+      "TypeBeat.Game\\TypeBeat.Game.csproj",
+      "TypeBeat.Game.Tests\\TypeBeat.Game.Tests.csproj",
+      "TypeBeat.Resources\\TypeBeat.Resources.csproj"
+    ]
+  }
+}
