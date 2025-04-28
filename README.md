@@ -1,1 +1,1 @@
-Typing Rhytmn Game that I planned to make a year ago but did not make any progress because idk very lazy. Gusto ko C2 kulay green
+Typing Rhytmn Game that I planned to make a year ago but did not make any progress because idk very lazy. Gusto ko C2 kulay green at gusto ko github ko kulay green
