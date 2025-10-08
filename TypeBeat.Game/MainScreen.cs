@@ -1,9 +1,10 @@
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Screens;
 using osuTK.Graphics;
+using TypeBeat.Game.ui; // Assuming CentralLogo is in this namespace
+using TypeBeat.Game.UI;  // Assuming MenuButton is in this namespace
 
 namespace TypeBeat.Game
 {
@@ -14,23 +15,35 @@ namespace TypeBeat.Game
         {
             InternalChildren = new Drawable[]
             {
+                // White background
                 new Box
                 {
-                    Colour = Color4.Violet,
+                    Colour = Color4.White,
                     RelativeSizeAxes = Axes.Both,
                 },
-                new SpriteText
+
+                new Box
                 {
-                    Y = 20,
-                    Text = "Main Screen",
+                    Colour = Color4.Black,
+                    RelativeSizeAxes = Axes.X,
+                    Height = 2, 
                     Anchor = Anchor.TopCentre,
                     Origin = Anchor.TopCentre,
-                    Font = FontUsage.Default.With(size: 40)
                 },
-                new SpinningBox
+                
+                new Box
+                {
+                    Colour = Color4.Black,
+                    RelativeSizeAxes = Axes.X,
+                    Height = 2,
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
+                },
+                new CentralLogo
                 {
                     Anchor = Anchor.Centre,
-                }
+                    Origin = Anchor.Centre,
+                },
             };
         }
     }
