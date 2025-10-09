@@ -6,7 +6,7 @@ namespace TypeBeat.Game.Tests.Visual
     {
         protected override ITestSceneTestRunner CreateRunner() => new TypeBeatTestSceneTestRunner();
 
-        private partial class TypeBeatTestSceneTestRunner : TypeBeatGameBase, ITestSceneTestRunner
+        private partial class TypeBeatTestSceneTestRunner : TypeBeatGame, ITestSceneTestRunner
         {
             private TestSceneTestRunner.TestRunner runner;
 
