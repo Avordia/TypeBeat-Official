@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TypeBeat.Game")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+94ae24add25f625bd2153cfcfd1263454291ff74")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+04190225008b53d66f3675a02a15a2dab7fe4e74")]
 [assembly: System.Reflection.AssemblyProductAttribute("TypeBeat.Game")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TypeBeat.Game")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
