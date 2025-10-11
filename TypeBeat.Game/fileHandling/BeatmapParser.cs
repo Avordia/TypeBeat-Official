@@ -11,12 +11,15 @@ namespace TypeBeat.Game.fileHandling
     {
         public static Beatpack ParseBeatpack(string filePath)
         {
-            var beatpack = new Beatpack();
+            var beatpack = new Beatpack
+            {
+                FilePath = filePath
+            };
 
             using (var archive = ZipFile.OpenRead(filePath))
             {
                 var tbmdEntry = archive.Entries.FirstOrDefault(e => e.Name.EndsWith(".tbmd"));
-                if (tbmdEntry == null)
+                if (tbmdEntry is null)
                     throw new FileNotFoundException("Beatpack does not contain a .tbmd file.");
 
                 using (var stream = tbmdEntry.Open())
@@ -26,11 +29,9 @@ namespace TypeBeat.Game.fileHandling
                     beatpack.Beatmap = JsonConvert.DeserializeObject<Beatmap>(jsonContent);
                 }
 
+                // Make audio optional by not throwing an error if it's missing.
                 var musicEntry = archive.Entries.FirstOrDefault(e => e.Name.Equals("audio.ogg", StringComparison.OrdinalIgnoreCase));
-                if (musicEntry == null)
-                    throw new FileNotFoundException("Beatpack does not contain an 'audio.ogg' music file.");
-
-                beatpack.MusicPath = musicEntry.Name;
+                beatpack.MusicPath = musicEntry?.Name; // This will be null if not found, which is now acceptable.
 
                 var backgroundEntry = archive.Entries.FirstOrDefault(e =>
                     e.Name.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
@@ -46,7 +47,7 @@ namespace TypeBeat.Game.fileHandling
 
             return beatpack;
         }
-        
+
         public static Beatmap ParseTbmd(string filePath)
         {
             if (!File.Exists(filePath))

@@ -37,6 +37,9 @@ namespace TypeBeat.Game.Beatmaps
 
         [JsonProperty("MapData")]
         public List<WordSegment> MapData { get; set; }
+
+        [JsonProperty("Audio")]
+        public string Audio { get; set; }
         
     }
 }
