@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TypeBeat")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.0+6252f49280e83f0bb3bfea92bf4ad03e8e39e9dc")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.0+fa6002e118fb68a673cf63c37135438ba4ae411a")]
 [assembly: System.Reflection.AssemblyProductAttribute("TypeBeat")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TypeBeat")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.0.0.0")]

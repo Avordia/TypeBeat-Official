@@ -9,7 +9,8 @@
       "TypeBeat.Game/1.0.0": {
         "dependencies": {
           "TypeBeat.Resources": "1.0.0",
-          "ppy.osu.Framework": "2024.1224.0"
+          "ppy.osu.Framework": "2025.1008.0",
+          "ppy.osu.Game.Resources": "2025.1006.0"
         },
         "runtime": {
           "TypeBeat.Game.dll": {}
@@ -74,7 +75,7 @@
           "System.Collections.Immutable": "1.7.1",
           "System.Memory": "4.5.4",
           "System.Reflection.Metadata": "1.8.1",
-          "System.Runtime.CompilerServices.Unsafe": "6.0.0"
+          "System.Runtime.CompilerServices.Unsafe": "6.0.0-rc.1.21451.13"
         },
         "runtime": {
           "lib/net5.0/Microsoft.Diagnostics.Runtime.dll": {
@@ -83,28 +84,10 @@
           }
         }
       },
-      "Microsoft.DotNet.PlatformAbstractions/2.0.3": {
-        "dependencies": {
-          "System.AppContext": "4.1.0",
-          "System.Collections": "4.0.11",
-          "System.IO": "4.1.0",
-          "System.IO.FileSystem": "4.0.1",
-          "System.Reflection.TypeExtensions": "4.1.0",
-          "System.Runtime.Extensions": "4.1.0",
-          "System.Runtime.InteropServices": "4.1.0",
-          "System.Runtime.InteropServices.RuntimeInformation": "4.0.0"
-        },
-        "runtime": {
-          "lib/netstandard1.3/Microsoft.DotNet.PlatformAbstractions.dll": {
-            "assemblyVersion": "2.0.3.0",
-            "fileVersion": "2.0.3.0"
-          }
-        }
-      },
       "Microsoft.Extensions.DependencyInjection/6.0.0-rc.1.21451.13": {
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0-rc.1.21451.13",
-          "System.Runtime.CompilerServices.Unsafe": "6.0.0"
+          "System.Runtime.CompilerServices.Unsafe": "6.0.0-rc.1.21451.13"
         },
         "runtime": {
           "lib/net6.0/Microsoft.Extensions.DependencyInjection.dll": {
@@ -121,21 +104,6 @@
           }
         }
       },
-      "Microsoft.Extensions.DependencyModel/2.0.3": {
-        "dependencies": {
-          "Microsoft.DotNet.PlatformAbstractions": "2.0.3",
-          "Newtonsoft.Json": "13.0.3",
-          "System.Diagnostics.Debug": "4.0.11",
-          "System.Dynamic.Runtime": "4.0.11",
-          "System.Linq": "4.1.0"
-        },
-        "runtime": {
-          "lib/netstandard1.6/Microsoft.Extensions.DependencyModel.dll": {
-            "assemblyVersion": "2.0.3.0",
-            "fileVersion": "2.0.3.0"
-          }
-        }
-      },
       "Microsoft.Extensions.ObjectPool/5.0.11": {
         "runtime": {
           "lib/net5.0/Microsoft.Extensions.ObjectPool.dll": {
@@ -145,18 +113,6 @@
         }
       },
       "Microsoft.NETCore.Platforms/1.1.0": {},
-      "Microsoft.NETCore.Targets/1.0.1": {},
-      "NativeLibraryLoader/1.0.13": {
-        "dependencies": {
-          "Microsoft.Extensions.DependencyModel": "2.0.3"
-        },
-        "runtime": {
-          "lib/netstandard2.0/NativeLibraryLoader.dll": {
-            "assemblyVersion": "1.0.13.0",
-            "fileVersion": "1.0.13.0"
-          }
-        }
-      },
       "NETStandard.Library/2.0.0": {
         "dependencies": {
           "Microsoft.NETCore.Platforms": "1.1.0"
@@ -181,50 +137,51 @@
           }
         }
       },
-      "OpenTabletDriver/0.6.5": {
+      "OpenTabletDriver/0.6.6": {
         "dependencies": {
           "HidSharpCore": "1.2.1.1",
           "Microsoft.Extensions.DependencyInjection": "6.0.0-rc.1.21451.13",
           "Newtonsoft.Json": "13.0.3",
-          "OpenTabletDriver.Configurations": "0.6.5",
-          "OpenTabletDriver.Native": "0.6.5",
-          "OpenTabletDriver.Plugin": "0.6.5"
+          "OpenTabletDriver.Configurations": "0.6.6",
+          "OpenTabletDriver.Native": "0.6.6",
+          "OpenTabletDriver.Plugin": "0.6.6"
         },
         "runtime": {
           "lib/net8.0/OpenTabletDriver.dll": {
-            "assemblyVersion": "0.6.5.0",
-            "fileVersion": "0.6.5.0"
+            "assemblyVersion": "0.6.6.0",
+            "fileVersion": "0.6.6.0"
           }
         }
       },
-      "OpenTabletDriver.Configurations/0.6.5": {
+      "OpenTabletDriver.Configurations/0.6.6": {
         "dependencies": {
           "Newtonsoft.Json": "13.0.3",
-          "OpenTabletDriver.Plugin": "0.6.5"
+          "OpenTabletDriver.Plugin": "0.6.6"
         },
         "runtime": {
           "lib/net8.0/OpenTabletDriver.Configurations.dll": {
-            "assemblyVersion": "0.6.5.0",
-            "fileVersion": "0.6.5.0"
+            "assemblyVersion": "0.6.6.0",
+            "fileVersion": "0.6.6.0"
           }
         }
       },
-      "OpenTabletDriver.Native/0.6.5": {
+      "OpenTabletDriver.Native/0.6.6": {
         "runtime": {
           "lib/net8.0/OpenTabletDriver.Native.dll": {
-            "assemblyVersion": "0.6.5.0",
-            "fileVersion": "0.6.5.0"
+            "assemblyVersion": "0.6.6.0",
+            "fileVersion": "0.6.6.0"
           }
         }
       },
-      "OpenTabletDriver.Plugin/0.6.5": {
+      "OpenTabletDriver.Plugin/0.6.6": {
         "dependencies": {
+          "Newtonsoft.Json": "13.0.3",
           "System.ComponentModel.Annotations": "5.0.0"
         },
         "runtime": {
           "lib/net8.0/OpenTabletDriver.Plugin.dll": {
-            "assemblyVersion": "0.6.5.0",
-            "fileVersion": "0.6.5.0"
+            "assemblyVersion": "0.6.6.0",
+            "fileVersion": "0.6.6.0"
           }
         }
       },
@@ -270,7 +227,7 @@
           }
         }
       },
-      "ppy.osu.Framework/2024.1224.0": {
+      "ppy.osu.Framework/2025.1008.0": {
         "dependencies": {
           "FFmpeg.AutoGen": "4.3.0.1",
           "JetBrains.Annotations": "2023.3.0",
@@ -279,9 +236,9 @@
           "Microsoft.Extensions.ObjectPool": "5.0.11",
           "NUnit": "3.13.3",
           "Newtonsoft.Json": "13.0.3",
-          "OpenTabletDriver": "0.6.5",
+          "OpenTabletDriver": "0.6.6",
           "SharpFNT": "2.0.0",
-          "SixLabors.ImageSharp": "3.1.5",
+          "SixLabors.ImageSharp": "3.1.11",
           "StbiSharp": "1.1.0",
           "System.Numerics.Tensors": "8.0.0",
           "managed-midi": "1.10.1",
@@ -290,22 +247,57 @@
           "ppy.ManagedBass.Mix": "2022.1216.0",
           "ppy.ManagedBass.Wasapi": "2022.1216.0",
           "ppy.SDL2-CS": "1.0.741-alpha",
-          "ppy.SDL3-CS": "2024.1128.0",
-          "ppy.Veldrid": "4.9.62-gca0239da6b",
-          "ppy.Veldrid.SPIRV": "1.0.15-gfbb03d21c2",
-          "ppy.osu.Framework.NativeLibs": "2024.809.1-nativelibs",
+          "ppy.SDL3-CS": "2025.920.0",
+          "ppy.Veldrid": "4.9.69-ga405fe8484",
+          "ppy.Veldrid.SPIRV": "1.0.15-g5911265ec3",
+          "ppy.osu.Framework.NativeLibs": "2025.806.0-nativelibs",
           "ppy.osu.Framework.SourceGeneration": "2024.1128.0",
           "ppy.osuTK.NS20": "1.0.211"
         },
         "runtime": {
           "lib/net8.0/osu.Framework.dll": {
-            "assemblyVersion": "2024.1224.0.0",
-            "fileVersion": "2024.1224.0.0"
+            "assemblyVersion": "2025.1008.0.0",
+            "fileVersion": "2025.1008.0.0"
           }
         }
       },
-      "ppy.osu.Framework.NativeLibs/2024.809.1-nativelibs": {
+      "ppy.osu.Framework.NativeLibs/2025.806.0-nativelibs": {
         "runtimeTargets": {
+          "runtimes/linux-arm64/native/libavcodec.so.58": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libavformat.so.58": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libavutil.so.56": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libbass.so": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libbass_fx.so": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libbassmix.so": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libswscale.so.5": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
           "runtimes/linux-x64/native/libavcodec.so.58": {
             "rid": "linux-x64",
             "assetType": "native",
@@ -444,17 +436,17 @@
           "runtimes/win-x64/native/bass.dll": {
             "rid": "win-x64",
             "assetType": "native",
-            "fileVersion": "2.4.17.0"
+            "fileVersion": "2.4.17.48"
           },
           "runtimes/win-x64/native/bass_fx.dll": {
             "rid": "win-x64",
             "assetType": "native",
-            "fileVersion": "2.4.12.6"
+            "fileVersion": "2.4.12.16"
           },
           "runtimes/win-x64/native/bassmix.dll": {
             "rid": "win-x64",
             "assetType": "native",
-            "fileVersion": "2.4.12.0"
+            "fileVersion": "2.4.12.10"
           },
           "runtimes/win-x64/native/basswasapi.dll": {
             "rid": "win-x64",
@@ -484,17 +476,17 @@
           "runtimes/win-x86/native/bass.dll": {
             "rid": "win-x86",
             "assetType": "native",
-            "fileVersion": "2.4.17.0"
+            "fileVersion": "2.4.17.48"
           },
           "runtimes/win-x86/native/bass_fx.dll": {
             "rid": "win-x86",
             "assetType": "native",
-            "fileVersion": "2.4.12.6"
+            "fileVersion": "2.4.12.16"
           },
           "runtimes/win-x86/native/bassmix.dll": {
             "rid": "win-x86",
             "assetType": "native",
-            "fileVersion": "2.4.12.0"
+            "fileVersion": "2.4.12.10"
           },
           "runtimes/win-x86/native/basswasapi.dll": {
             "rid": "win-x86",
@@ -509,6 +501,145 @@
         }
       },
       "ppy.osu.Framework.SourceGeneration/2024.1128.0": {},
+      "ppy.osu.Game.Resources/2025.1006.0": {
+        "runtime": {
+          "lib/netstandard2.1/osu.Game.Resources.dll": {
+            "assemblyVersion": "2025.1006.0.0",
+            "fileVersion": "2025.1006.0.0"
+          }
+        },
+        "resources": {
+          "lib/netstandard2.1/ar/osu.Game.Resources.resources.dll": {
+            "locale": "ar"
+          },
+          "lib/netstandard2.1/be/osu.Game.Resources.resources.dll": {
+            "locale": "be"
+          },
+          "lib/netstandard2.1/bg/osu.Game.Resources.resources.dll": {
+            "locale": "bg"
+          },
+          "lib/netstandard2.1/ca/osu.Game.Resources.resources.dll": {
+            "locale": "ca"
+          },
+          "lib/netstandard2.1/cs/osu.Game.Resources.resources.dll": {
+            "locale": "cs"
+          },
+          "lib/netstandard2.1/da/osu.Game.Resources.resources.dll": {
+            "locale": "da"
+          },
+          "lib/netstandard2.1/de/osu.Game.Resources.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard2.1/el/osu.Game.Resources.resources.dll": {
+            "locale": "el"
+          },
+          "lib/netstandard2.1/es-419/osu.Game.Resources.resources.dll": {
+            "locale": "es-419"
+          },
+          "lib/netstandard2.1/es/osu.Game.Resources.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard2.1/fa-IR/osu.Game.Resources.resources.dll": {
+            "locale": "fa-IR"
+          },
+          "lib/netstandard2.1/fi/osu.Game.Resources.resources.dll": {
+            "locale": "fi"
+          },
+          "lib/netstandard2.1/fr/osu.Game.Resources.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard2.1/he/osu.Game.Resources.resources.dll": {
+            "locale": "he"
+          },
+          "lib/netstandard2.1/hr-HR/osu.Game.Resources.resources.dll": {
+            "locale": "hr-HR"
+          },
+          "lib/netstandard2.1/hu/osu.Game.Resources.resources.dll": {
+            "locale": "hu"
+          },
+          "lib/netstandard2.1/id/osu.Game.Resources.resources.dll": {
+            "locale": "id"
+          },
+          "lib/netstandard2.1/it/osu.Game.Resources.resources.dll": {
+            "locale": "it"
+          },
+          "lib/netstandard2.1/ja/osu.Game.Resources.resources.dll": {
+            "locale": "ja"
+          },
+          "lib/netstandard2.1/kk-KZ/osu.Game.Resources.resources.dll": {
+            "locale": "kk-KZ"
+          },
+          "lib/netstandard2.1/ko/osu.Game.Resources.resources.dll": {
+            "locale": "ko"
+          },
+          "lib/netstandard2.1/lt/osu.Game.Resources.resources.dll": {
+            "locale": "lt"
+          },
+          "lib/netstandard2.1/lv-LV/osu.Game.Resources.resources.dll": {
+            "locale": "lv-LV"
+          },
+          "lib/netstandard2.1/ms-MY/osu.Game.Resources.resources.dll": {
+            "locale": "ms-MY"
+          },
+          "lib/netstandard2.1/nl/osu.Game.Resources.resources.dll": {
+            "locale": "nl"
+          },
+          "lib/netstandard2.1/no/osu.Game.Resources.resources.dll": {
+            "locale": "no"
+          },
+          "lib/netstandard2.1/pl/osu.Game.Resources.resources.dll": {
+            "locale": "pl"
+          },
+          "lib/netstandard2.1/pt-BR/osu.Game.Resources.resources.dll": {
+            "locale": "pt-BR"
+          },
+          "lib/netstandard2.1/pt/osu.Game.Resources.resources.dll": {
+            "locale": "pt"
+          },
+          "lib/netstandard2.1/ro/osu.Game.Resources.resources.dll": {
+            "locale": "ro"
+          },
+          "lib/netstandard2.1/ru/osu.Game.Resources.resources.dll": {
+            "locale": "ru"
+          },
+          "lib/netstandard2.1/si-LK/osu.Game.Resources.resources.dll": {
+            "locale": "si-LK"
+          },
+          "lib/netstandard2.1/sk/osu.Game.Resources.resources.dll": {
+            "locale": "sk"
+          },
+          "lib/netstandard2.1/sl/osu.Game.Resources.resources.dll": {
+            "locale": "sl"
+          },
+          "lib/netstandard2.1/sr/osu.Game.Resources.resources.dll": {
+            "locale": "sr"
+          },
+          "lib/netstandard2.1/sv/osu.Game.Resources.resources.dll": {
+            "locale": "sv"
+          },
+          "lib/netstandard2.1/tg-TJ/osu.Game.Resources.resources.dll": {
+            "locale": "tg-TJ"
+          },
+          "lib/netstandard2.1/th/osu.Game.Resources.resources.dll": {
+            "locale": "th"
+          },
+          "lib/netstandard2.1/tr/osu.Game.Resources.resources.dll": {
+            "locale": "tr"
+          },
+          "lib/netstandard2.1/uk/osu.Game.Resources.resources.dll": {
+            "locale": "uk"
+          },
+          "lib/netstandard2.1/vi/osu.Game.Resources.resources.dll": {
+            "locale": "vi"
+          },
+          "lib/netstandard2.1/zh-Hant/osu.Game.Resources.resources.dll": {
+            "locale": "zh-Hant"
+          },
+          "lib/netstandard2.1/zh/osu.Game.Resources.resources.dll": {
+            "locale": "zh"
+          }
+        }
+      },
       "ppy.osuTK.NS20/1.0.211": {
         "runtime": {
           "lib/netstandard2.0/osuTK.dll": {
@@ -587,14 +718,11 @@
           }
         }
       },
-      "ppy.SDL3-CS/2024.1128.0": {
-        "dependencies": {
-          "JetBrains.Annotations": "2023.3.0"
-        },
+      "ppy.SDL3-CS/2025.920.0": {
         "runtime": {
           "lib/net8.0/SDL3-CS.dll": {
-            "assemblyVersion": "2024.1128.0.0",
-            "fileVersion": "2024.1128.0.0"
+            "assemblyVersion": "2025.920.0.0",
+            "fileVersion": "2025.920.0.0"
           }
         },
         "runtimeTargets": {
@@ -676,86 +804,109 @@
           "runtimes/win-arm64/native/SDL3.dll": {
             "rid": "win-arm64",
             "assetType": "native",
-            "fileVersion": "3.1.5.0"
+            "fileVersion": "3.3.0.0"
           },
           "runtimes/win-x64/native/SDL3.dll": {
             "rid": "win-x64",
             "assetType": "native",
-            "fileVersion": "3.1.5.0"
+            "fileVersion": "3.3.0.0"
           },
           "runtimes/win-x86/native/SDL3.dll": {
             "rid": "win-x86",
             "assetType": "native",
-            "fileVersion": "3.1.7.0"
+            "fileVersion": "3.3.0.0"
           }
         }
       },
-      "ppy.Veldrid/4.9.62-gca0239da6b": {
+      "ppy.Veldrid/4.9.69-ga405fe8484": {
         "dependencies": {
-          "NativeLibraryLoader": "1.0.13",
           "Vortice.D3DCompiler": "2.4.2",
           "Vortice.Direct3D11": "2.4.2",
-          "ppy.Veldrid.MetalBindings": "4.9.62-gca0239da6b",
-          "ppy.Veldrid.OpenGLBindings": "4.9.62-gca0239da6b",
+          "ppy.Veldrid.MetalBindings": "4.9.69-ga405fe8484",
+          "ppy.Veldrid.OpenGLBindings": "4.9.69-ga405fe8484",
           "ppy.Vk": "1.0.26"
         },
         "runtime": {
           "lib/net8.0/ppy.Veldrid.dll": {
             "assemblyVersion": "4.9.0.0",
-            "fileVersion": "4.9.62.714"
+            "fileVersion": "4.9.69.1444"
           }
         }
       },
-      "ppy.Veldrid.MetalBindings/4.9.62-gca0239da6b": {
+      "ppy.Veldrid.MetalBindings/4.9.69-ga405fe8484": {
         "runtime": {
           "lib/net8.0/ppy.Veldrid.MetalBindings.dll": {
             "assemblyVersion": "4.9.0.0",
-            "fileVersion": "4.9.62.714"
+            "fileVersion": "4.9.69.1444"
           }
         }
       },
-      "ppy.Veldrid.OpenGLBindings/4.9.62-gca0239da6b": {
+      "ppy.Veldrid.OpenGLBindings/4.9.69-ga405fe8484": {
         "runtime": {
           "lib/net8.0/ppy.Veldrid.OpenGLBindings.dll": {
             "assemblyVersion": "4.9.0.0",
-            "fileVersion": "4.9.62.714"
+            "fileVersion": "4.9.69.1444"
           }
         }
       },
-      "ppy.Veldrid.SPIRV/1.0.15-gfbb03d21c2": {
+      "ppy.Veldrid.SPIRV/1.0.15-g5911265ec3": {
         "dependencies": {
-          "System.Runtime.CompilerServices.Unsafe": "6.0.0",
-          "ppy.Veldrid": "4.9.62-gca0239da6b"
+          "ppy.Veldrid": "4.9.69-ga405fe8484"
         },
         "runtime": {
-          "lib/net6.0/ppy.Veldrid.SPIRV.dll": {
+          "lib/net8.0/ppy.Veldrid.SPIRV.dll": {
             "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.15.37"
+            "fileVersion": "1.0.15.53"
           }
         },
         "runtimeTargets": {
-          "runtimes/ios/native/veldrid-spirv.xcframework/Info.plist": {
+          "runtimes/android-arm/native/libveldrid-spirv.so": {
+            "rid": "android-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/android-arm64/native/libveldrid-spirv.so": {
+            "rid": "android-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/android-x64/native/libveldrid-spirv.so": {
+            "rid": "android-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/android-x86/native/libveldrid-spirv.so": {
+            "rid": "android-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/ios/native/veldrid-spirv.xcframework/veldrid-spirv.xcframework/Info.plist": {
             "rid": "ios",
             "assetType": "native",
             "fileVersion": "0.0.0.0"
           },
-          "runtimes/ios/native/veldrid-spirv.xcframework/ios-arm64/veldrid-spirv.framework/Info.plist": {
+          "runtimes/ios/native/veldrid-spirv.xcframework/veldrid-spirv.xcframework/ios-arm64/veldrid-spirv.framework/Info.plist": {
             "rid": "ios",
             "assetType": "native",
             "fileVersion": "0.0.0.0"
           },
-          "runtimes/ios/native/veldrid-spirv.xcframework/ios-arm64/veldrid-spirv.framework/veldrid-spirv": {
+          "runtimes/ios/native/veldrid-spirv.xcframework/veldrid-spirv.xcframework/ios-arm64/veldrid-spirv.framework/veldrid-spirv": {
             "rid": "ios",
             "assetType": "native",
             "fileVersion": "0.0.0.0"
           },
-          "runtimes/ios/native/veldrid-spirv.xcframework/ios-arm64_x86_64-simulator/veldrid-spirv.framework/Info.plist": {
+          "runtimes/ios/native/veldrid-spirv.xcframework/veldrid-spirv.xcframework/ios-arm64_x86_64-simulator/veldrid-spirv.framework/Info.plist": {
             "rid": "ios",
             "assetType": "native",
             "fileVersion": "0.0.0.0"
           },
-          "runtimes/ios/native/veldrid-spirv.xcframework/ios-arm64_x86_64-simulator/veldrid-spirv.framework/veldrid-spirv": {
+          "runtimes/ios/native/veldrid-spirv.xcframework/veldrid-spirv.xcframework/ios-arm64_x86_64-simulator/veldrid-spirv.framework/veldrid-spirv": {
             "rid": "ios",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libveldrid-spirv.so": {
+            "rid": "linux-arm64",
             "assetType": "native",
             "fileVersion": "0.0.0.0"
           },
@@ -766,6 +917,11 @@
           },
           "runtimes/osx/native/libveldrid-spirv.dylib": {
             "rid": "osx",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-arm64/native/libveldrid-spirv.dll": {
+            "rid": "win-arm64",
             "assetType": "native",
             "fileVersion": "0.0.0.0"
           },
@@ -787,12 +943,6 @@
             "assemblyVersion": "1.0.26.0",
             "fileVersion": "1.0.26.0"
           }
-        }
-      },
-      "runtime.native.System/4.0.0": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1"
         }
       },
       "SharpFNT/2.0.0": {
@@ -829,11 +979,11 @@
           }
         }
       },
-      "SixLabors.ImageSharp/3.1.5": {
+      "SixLabors.ImageSharp/3.1.11": {
         "runtime": {
           "lib/net6.0/SixLabors.ImageSharp.dll": {
             "assemblyVersion": "3.0.0.0",
-            "fileVersion": "3.1.5.0"
+            "fileVersion": "3.1.11.0"
           }
         }
       },
@@ -867,110 +1017,9 @@
           }
         }
       },
-      "System.AppContext/4.1.0": {
-        "dependencies": {
-          "System.Runtime": "4.1.0"
-        }
-      },
       "System.Buffers/4.5.1": {},
-      "System.Collections/4.0.11": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
       "System.Collections.Immutable/1.7.1": {},
       "System.ComponentModel.Annotations/5.0.0": {},
-      "System.Diagnostics.Debug/4.0.11": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Dynamic.Runtime/4.0.11": {
-        "dependencies": {
-          "System.Collections": "4.0.11",
-          "System.Diagnostics.Debug": "4.0.11",
-          "System.Globalization": "4.0.11",
-          "System.Linq": "4.1.0",
-          "System.Linq.Expressions": "4.1.0",
-          "System.ObjectModel": "4.0.12",
-          "System.Reflection": "4.1.0",
-          "System.Reflection.Emit": "4.0.1",
-          "System.Reflection.Emit.ILGeneration": "4.0.1",
-          "System.Reflection.Primitives": "4.0.1",
-          "System.Reflection.TypeExtensions": "4.1.0",
-          "System.Resources.ResourceManager": "4.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Runtime.Extensions": "4.1.0",
-          "System.Threading": "4.0.11"
-        }
-      },
-      "System.Globalization/4.0.11": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.IO/4.1.0": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Text.Encoding": "4.0.11",
-          "System.Threading.Tasks": "4.0.11"
-        }
-      },
-      "System.IO.FileSystem/4.0.1": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.IO": "4.1.0",
-          "System.IO.FileSystem.Primitives": "4.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Runtime.Handles": "4.0.1",
-          "System.Text.Encoding": "4.0.11",
-          "System.Threading.Tasks": "4.0.11"
-        }
-      },
-      "System.IO.FileSystem.Primitives/4.0.1": {
-        "dependencies": {
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Linq/4.1.0": {
-        "dependencies": {
-          "System.Collections": "4.0.11",
-          "System.Diagnostics.Debug": "4.0.11",
-          "System.Resources.ResourceManager": "4.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Runtime.Extensions": "4.1.0"
-        }
-      },
-      "System.Linq.Expressions/4.1.0": {
-        "dependencies": {
-          "System.Collections": "4.0.11",
-          "System.Diagnostics.Debug": "4.0.11",
-          "System.Globalization": "4.0.11",
-          "System.IO": "4.1.0",
-          "System.Linq": "4.1.0",
-          "System.ObjectModel": "4.0.12",
-          "System.Reflection": "4.1.0",
-          "System.Reflection.Emit": "4.0.1",
-          "System.Reflection.Emit.ILGeneration": "4.0.1",
-          "System.Reflection.Emit.Lightweight": "4.0.1",
-          "System.Reflection.Extensions": "4.0.1",
-          "System.Reflection.Primitives": "4.0.1",
-          "System.Reflection.TypeExtensions": "4.1.0",
-          "System.Resources.ResourceManager": "4.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Runtime.Extensions": "4.1.0",
-          "System.Threading": "4.0.11"
-        }
-      },
       "System.Memory/4.5.4": {},
       "System.Numerics.Tensors/8.0.0": {
         "runtime": {
@@ -980,141 +1029,8 @@
           }
         }
       },
-      "System.ObjectModel/4.0.12": {
-        "dependencies": {
-          "System.Collections": "4.0.11",
-          "System.Diagnostics.Debug": "4.0.11",
-          "System.Resources.ResourceManager": "4.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Threading": "4.0.11"
-        }
-      },
-      "System.Reflection/4.1.0": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.IO": "4.1.0",
-          "System.Reflection.Primitives": "4.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Reflection.Emit/4.0.1": {
-        "dependencies": {
-          "System.IO": "4.1.0",
-          "System.Reflection": "4.1.0",
-          "System.Reflection.Emit.ILGeneration": "4.0.1",
-          "System.Reflection.Primitives": "4.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Reflection.Emit.ILGeneration/4.0.1": {
-        "dependencies": {
-          "System.Reflection": "4.1.0",
-          "System.Reflection.Primitives": "4.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Reflection.Emit.Lightweight/4.0.1": {
-        "dependencies": {
-          "System.Reflection": "4.1.0",
-          "System.Reflection.Emit.ILGeneration": "4.0.1",
-          "System.Reflection.Primitives": "4.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Reflection.Extensions/4.0.1": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Reflection": "4.1.0",
-          "System.Runtime": "4.1.0"
-        }
-      },
       "System.Reflection.Metadata/1.8.1": {},
-      "System.Reflection.Primitives/4.0.1": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Reflection.TypeExtensions/4.1.0": {
-        "dependencies": {
-          "System.Reflection": "4.1.0",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Resources.ResourceManager/4.0.1": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Globalization": "4.0.11",
-          "System.Reflection": "4.1.0",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Runtime/4.1.0": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1"
-        }
-      },
-      "System.Runtime.CompilerServices.Unsafe/6.0.0": {},
-      "System.Runtime.Extensions/4.1.0": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Runtime.Handles/4.0.1": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Runtime.InteropServices/4.1.0": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Reflection": "4.1.0",
-          "System.Reflection.Primitives": "4.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Runtime.Handles": "4.0.1"
-        }
-      },
-      "System.Runtime.InteropServices.RuntimeInformation/4.0.0": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "System.Reflection": "4.1.0",
-          "System.Resources.ResourceManager": "4.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Runtime.InteropServices": "4.1.0",
-          "System.Threading": "4.0.11",
-          "runtime.native.System": "4.0.0"
-        }
-      },
-      "System.Text.Encoding/4.0.11": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Threading/4.0.11": {
-        "dependencies": {
-          "System.Runtime": "4.1.0",
-          "System.Threading.Tasks": "4.0.11"
-        }
-      },
-      "System.Threading.Tasks/4.0.11": {
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.0.1",
-          "System.Runtime": "4.1.0"
-        }
-      },
+      "System.Runtime.CompilerServices.Unsafe/6.0.0-rc.1.21451.13": {},
       "Vortice.D3DCompiler/2.4.2": {
         "dependencies": {
           "SharpGen.Runtime": "2.0.0-beta.13",
@@ -1179,6 +1095,9 @@
         }
       },
       "TypeBeat.Resources/1.0.0": {
+        "dependencies": {
+          "ppy.osu.Framework": "2025.1008.0"
+        },
         "runtime": {
           "TypeBeat.Resources.dll": {
             "assemblyVersion": "1.0.0",
@@ -1243,13 +1162,6 @@
       "path": "microsoft.diagnostics.runtime/2.0.161401",
       "hashPath": "microsoft.diagnostics.runtime.2.0.161401.nupkg.sha512"
     },
-    "Microsoft.DotNet.PlatformAbstractions/2.0.3": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-cXgVdJmW3fLwmSxsv0RlTe4BIKs6slVXV5xRvsO4CV4aUeY67GelaujxY/lP5yVlaMjMM22pXKbKtUY9x050Mw==",
-      "path": "microsoft.dotnet.platformabstractions/2.0.3",
-      "hashPath": "microsoft.dotnet.platformabstractions.2.0.3.nupkg.sha512"
-    },
     "Microsoft.Extensions.DependencyInjection/6.0.0-rc.1.21451.13": {
       "type": "package",
       "serviceable": true,
@@ -1264,13 +1176,6 @@
       "path": "microsoft.extensions.dependencyinjection.abstractions/6.0.0-rc.1.21451.13",
       "hashPath": "microsoft.extensions.dependencyinjection.abstractions.6.0.0-rc.1.21451.13.nupkg.sha512"
     },
-    "Microsoft.Extensions.DependencyModel/2.0.3": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-OiNYN/QeZLuYcn4CvYrOmYgODPB1Jpqft+cT4F3Hkq5poj+1DLfbIBftMI/Pn8J7DyHhYeBMLxJUuugjvk/Fuw==",
-      "path": "microsoft.extensions.dependencymodel/2.0.3",
-      "hashPath": "microsoft.extensions.dependencymodel.2.0.3.nupkg.sha512"
-    },
     "Microsoft.Extensions.ObjectPool/5.0.11": {
       "type": "package",
       "serviceable": true,
@@ -1284,20 +1189,6 @@
       "sha512": "sha512-kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A==",
       "path": "microsoft.netcore.platforms/1.1.0",
       "hashPath": "microsoft.netcore.platforms.1.1.0.nupkg.sha512"
-    },
-    "Microsoft.NETCore.Targets/1.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-rkn+fKobF/cbWfnnfBOQHKVKIOpxMZBvlSHkqDWgBpwGDcLRduvs3D9OLGeV6GWGvVwNlVi2CBbTjuPmtHvyNw==",
-      "path": "microsoft.netcore.targets/1.0.1",
-      "hashPath": "microsoft.netcore.targets.1.0.1.nupkg.sha512"
-    },
-    "NativeLibraryLoader/1.0.13": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-78Lg887CZb4W8ZwmcNuoE75/7x//ljw/wnCuaUnThfe/RcAyuorfK9YkxBBpMWXTqfmjCb/FEsBFniySs+HcOQ==",
-      "path": "nativelibraryloader/1.0.13",
-      "hashPath": "nativelibraryloader.1.0.13.nupkg.sha512"
     },
     "NETStandard.Library/2.0.0": {
       "type": "package",
@@ -1320,33 +1211,33 @@
       "path": "nunit/3.13.3",
       "hashPath": "nunit.3.13.3.nupkg.sha512"
     },
-    "OpenTabletDriver/0.6.5": {
+    "OpenTabletDriver/0.6.6": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-RBiW8gcawRXgYgThsTv7nTA91S5XuZo/RVr9jEwHoD97dCmCMJ+Jtjzs9vQaD8cr9lRqjsEbOaOLBQTajEpj/g==",
-      "path": "opentabletdriver/0.6.5",
-      "hashPath": "opentabletdriver.0.6.5.nupkg.sha512"
+      "sha512": "sha512-wfKFOhiJCDSv4KIHssghu1FLuDqwXq0uD9UxRic98ZWijGrr54udj6y50prdaFrNGPbQ9hrU9K49EcVrsCJ1QA==",
+      "path": "opentabletdriver/0.6.6",
+      "hashPath": "opentabletdriver.0.6.6.nupkg.sha512"
     },
-    "OpenTabletDriver.Configurations/0.6.5": {
+    "OpenTabletDriver.Configurations/0.6.6": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-N6EGc0R3QFiSRu5bR+T5SQ1VY9GsMquCSpEGFPdIJgHjl6stgBukAhMLDUl2d3BuobAjzUDyqXjXU1n5lmseGw==",
-      "path": "opentabletdriver.configurations/0.6.5",
-      "hashPath": "opentabletdriver.configurations.0.6.5.nupkg.sha512"
+      "sha512": "sha512-iodjK87W01FSv/NrvzyD6JGV8TXP9XUDECJZuZK6VX8Fz9k7iWQ69a+6NoEaHv03oJOPbr57EUeZOD62na76qw==",
+      "path": "opentabletdriver.configurations/0.6.6",
+      "hashPath": "opentabletdriver.configurations.0.6.6.nupkg.sha512"
     },
-    "OpenTabletDriver.Native/0.6.5": {
+    "OpenTabletDriver.Native/0.6.6": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-KSqSQ6F+csq78zO5087VxudR0A8Q9p/TMQmrlY4AYn4pfcCYXTymyHQxupQU0fY/2KfeF8SkKpuLCfV8RXeV9g==",
-      "path": "opentabletdriver.native/0.6.5",
-      "hashPath": "opentabletdriver.native.0.6.5.nupkg.sha512"
+      "sha512": "sha512-Zesr1lQidF83/5+Q4VBc8vDMz/KdwP5lgNhtgVKi5xJncXRc4k4IUGiWJDaNdNJ5S4ROBKgnPuRbQYi5Yd4pfQ==",
+      "path": "opentabletdriver.native/0.6.6",
+      "hashPath": "opentabletdriver.native.0.6.6.nupkg.sha512"
     },
-    "OpenTabletDriver.Plugin/0.6.5": {
+    "OpenTabletDriver.Plugin/0.6.6": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-A0G3jTvh6YeeDno/29zq1v2TTPpMdAnSFL5hqAdA/uuk1yNB3XyGXyklG1nAlo7eKv9Atv+VB+rF8/ZmV3urqQ==",
-      "path": "opentabletdriver.plugin/0.6.5",
-      "hashPath": "opentabletdriver.plugin.0.6.5.nupkg.sha512"
+      "sha512": "sha512-bEtblHCZ1iT7978ZkNFFdP1kBnYMeVGq7fsTVKV4MSdmaxrTI67kq8nHby6fcK0eUkYTo7ZTd3mpc4XWNr5trQ==",
+      "path": "opentabletdriver.plugin/0.6.6",
+      "hashPath": "opentabletdriver.plugin.0.6.6.nupkg.sha512"
     },
     "PolySharp/1.10.0": {
       "type": "package",
@@ -1383,19 +1274,19 @@
       "path": "ppy.managedbass.wasapi/2022.1216.0",
       "hashPath": "ppy.managedbass.wasapi.2022.1216.0.nupkg.sha512"
     },
-    "ppy.osu.Framework/2024.1224.0": {
+    "ppy.osu.Framework/2025.1008.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-oflvM067IlvGsvggGJpSUZPuYJoRlv2vFvJU4KRAdDktsIjr1EHjjK5CBv7fL7mbNbD/enSiASGYII+9ib4jmw==",
-      "path": "ppy.osu.framework/2024.1224.0",
-      "hashPath": "ppy.osu.framework.2024.1224.0.nupkg.sha512"
+      "sha512": "sha512-NkOM/pIp2z8Lj0Rk1+f5J+rwqlUb1V5aproTFGk33a9FSOd7R8owKo9FLHyhFupPcArgqrITbJdn5a5IfTGIbw==",
+      "path": "ppy.osu.framework/2025.1008.0",
+      "hashPath": "ppy.osu.framework.2025.1008.0.nupkg.sha512"
     },
-    "ppy.osu.Framework.NativeLibs/2024.809.1-nativelibs": {
+    "ppy.osu.Framework.NativeLibs/2025.806.0-nativelibs": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-oh4VI3BMebV9O/1Qv3qEtSK4RtZ3MIU9yynr48IfvL/J0JoPB9dhyWvi3/lieGN7HCVMtiKWfiMxySSrbcNG/Q==",
-      "path": "ppy.osu.framework.nativelibs/2024.809.1-nativelibs",
-      "hashPath": "ppy.osu.framework.nativelibs.2024.809.1-nativelibs.nupkg.sha512"
+      "sha512": "sha512-andr6OYdjUCpglWMdKoXarGVcgQFza3oRZ8LMJFHjv31N2tO6v9DTs6gZdJB8YWuOBMn77A6Eg3Hy38UZhD9IA==",
+      "path": "ppy.osu.framework.nativelibs/2025.806.0-nativelibs",
+      "hashPath": "ppy.osu.framework.nativelibs.2025.806.0-nativelibs.nupkg.sha512"
     },
     "ppy.osu.Framework.SourceGeneration/2024.1128.0": {
       "type": "package",
@@ -1403,6 +1294,13 @@
       "sha512": "sha512-j677KxWByRP3JeDWmLlACMQmRD6XrvOBfzniQYih5VaxJJKX+yyALJMQiBgyFHdmlVQhYU7W676S5/nd7yZw0Q==",
       "path": "ppy.osu.framework.sourcegeneration/2024.1128.0",
       "hashPath": "ppy.osu.framework.sourcegeneration.2024.1128.0.nupkg.sha512"
+    },
+    "ppy.osu.Game.Resources/2025.1006.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-K/VPk5KwASBMTp/Qt6yROiA1qk5wpLM2aEgH+bfxmvHqeDChRvgERUg6W4oNEkAQWYCa3pox8e5nz+2/YMRIhA==",
+      "path": "ppy.osu.game.resources/2025.1006.0",
+      "hashPath": "ppy.osu.game.resources.2025.1006.0.nupkg.sha512"
     },
     "ppy.osuTK.NS20/1.0.211": {
       "type": "package",
@@ -1418,40 +1316,40 @@
       "path": "ppy.sdl2-cs/1.0.741-alpha",
       "hashPath": "ppy.sdl2-cs.1.0.741-alpha.nupkg.sha512"
     },
-    "ppy.SDL3-CS/2024.1128.0": {
+    "ppy.SDL3-CS/2025.920.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-yGWvttW0Pr0PL36FnRafni1f8dkNiiXaxp3+kl5SUjmHYBRB8wIxR/yVgT4/XOHbtYswZpK19BpubIe/JArCAw==",
-      "path": "ppy.sdl3-cs/2024.1128.0",
-      "hashPath": "ppy.sdl3-cs.2024.1128.0.nupkg.sha512"
+      "sha512": "sha512-N2K7h3iV2jlEBKhechKEqoV5K9HZXLJEYT0bM8Do8+cLVqFiWVfqgg2dFdBN4NIXct+EzmsHVmrLBjAFvn99mg==",
+      "path": "ppy.sdl3-cs/2025.920.0",
+      "hashPath": "ppy.sdl3-cs.2025.920.0.nupkg.sha512"
     },
-    "ppy.Veldrid/4.9.62-gca0239da6b": {
+    "ppy.Veldrid/4.9.69-ga405fe8484": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-hJlEcOUg1te/qzKrqyx1w73h+8/3Iwx+Wh7jfmW+eShnPCxafgoYaYgo2mavZzP2sBORumzojUVn++bwurs7Gw==",
-      "path": "ppy.veldrid/4.9.62-gca0239da6b",
-      "hashPath": "ppy.veldrid.4.9.62-gca0239da6b.nupkg.sha512"
+      "sha512": "sha512-TV+ufm1jC9jeWe4Ubb15/DI/9xbmZxx3+vsVDrRehHnTS9i/8I+vPMl7zsexInPG/Gb9NDgItL45C1hGrRl9qg==",
+      "path": "ppy.veldrid/4.9.69-ga405fe8484",
+      "hashPath": "ppy.veldrid.4.9.69-ga405fe8484.nupkg.sha512"
     },
-    "ppy.Veldrid.MetalBindings/4.9.62-gca0239da6b": {
+    "ppy.Veldrid.MetalBindings/4.9.69-ga405fe8484": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-YLAUg0hxZyyjAeicxX+Z/3cw/3i202TeMcVPiUZIeA35S3APDSlLpDcDfBrL7orl0L+VW7kRc3yE26nOQCVwGA==",
-      "path": "ppy.veldrid.metalbindings/4.9.62-gca0239da6b",
-      "hashPath": "ppy.veldrid.metalbindings.4.9.62-gca0239da6b.nupkg.sha512"
+      "sha512": "sha512-lRtFkLswqdLZmq9q5JC2IB4DT4tAVcutB/zTQUJ7MnGSWFutrj8cxDh3/orFMojS1VAaU19MMC6h6QXqAbUa7w==",
+      "path": "ppy.veldrid.metalbindings/4.9.69-ga405fe8484",
+      "hashPath": "ppy.veldrid.metalbindings.4.9.69-ga405fe8484.nupkg.sha512"
     },
-    "ppy.Veldrid.OpenGLBindings/4.9.62-gca0239da6b": {
+    "ppy.Veldrid.OpenGLBindings/4.9.69-ga405fe8484": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-HUBGBVbxiGzytxZ0280uiFIc/yxkpcQgjSKMMFRRu2K7KN4DzPtEtC+AsIoCp6zIsofzdgQKJn7cSYSH6NUPBw==",
-      "path": "ppy.veldrid.openglbindings/4.9.62-gca0239da6b",
-      "hashPath": "ppy.veldrid.openglbindings.4.9.62-gca0239da6b.nupkg.sha512"
+      "sha512": "sha512-DF7jtLhMDsPupDoSYawLiM2Ho3XzQyBwxKMWmAYO27CGgDoWLxVa/CGrGTzgHdprH//zIBM4eK0pvJzzL06CYA==",
+      "path": "ppy.veldrid.openglbindings/4.9.69-ga405fe8484",
+      "hashPath": "ppy.veldrid.openglbindings.4.9.69-ga405fe8484.nupkg.sha512"
     },
-    "ppy.Veldrid.SPIRV/1.0.15-gfbb03d21c2": {
+    "ppy.Veldrid.SPIRV/1.0.15-g5911265ec3": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-CLEyvMC5ZQ3ppO4j4vdL4uvpa4hP5e+IyLL1CquNMTEFWXUgu0z+jYalkUF/dtKPm45gqXic97oITfzOPRsmTw==",
-      "path": "ppy.veldrid.spirv/1.0.15-gfbb03d21c2",
-      "hashPath": "ppy.veldrid.spirv.1.0.15-gfbb03d21c2.nupkg.sha512"
+      "sha512": "sha512-hTHVEqmAJ/p6zlHBQKrg5pkCHiNFhEp1Ms5No7eur4E48ALUdPsnruedPMXIXye2vX2JLZa8CohZPOCgyApJNQ==",
+      "path": "ppy.veldrid.spirv/1.0.15-g5911265ec3",
+      "hashPath": "ppy.veldrid.spirv.1.0.15-g5911265ec3.nupkg.sha512"
     },
     "ppy.Vk/1.0.26": {
       "type": "package",
@@ -1459,13 +1357,6 @@
       "sha512": "sha512-hovUs8hPS2QUChNnaU/3IflJsVtXXMa3KSxRjA3gxBOalTYzL2jD35Dusf7bYDw+imeu56pResM7qDxvKXnvZw==",
       "path": "ppy.vk/1.0.26",
       "hashPath": "ppy.vk.1.0.26.nupkg.sha512"
-    },
-    "runtime.native.System/4.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-QfS/nQI7k/BLgmLrw7qm7YBoULEvgWnPI+cYsbfCVFTW8Aj+i8JhccxcFMu1RWms0YZzF+UHguNBK4Qn89e2Sg==",
-      "path": "runtime.native.system/4.0.0",
-      "hashPath": "runtime.native.system.4.0.0.nupkg.sha512"
     },
     "SharpFNT/2.0.0": {
       "type": "package",
@@ -1488,12 +1379,12 @@
       "path": "sharpgen.runtime.com/2.0.0-beta.13",
       "hashPath": "sharpgen.runtime.com.2.0.0-beta.13.nupkg.sha512"
     },
-    "SixLabors.ImageSharp/3.1.5": {
+    "SixLabors.ImageSharp/3.1.11": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-lNtlq7dSI/QEbYey+A0xn48z5w4XHSffF8222cC4F4YwTXfEImuiBavQcWjr49LThT/pRmtWJRcqA/PlL+eJ6g==",
-      "path": "sixlabors.imagesharp/3.1.5",
-      "hashPath": "sixlabors.imagesharp.3.1.5.nupkg.sha512"
+      "sha512": "sha512-JfPLyigLthuE50yi6tMt7Amrenr/fA31t2CvJyhy/kQmfulIBAqo5T/YFUSRHtuYPXRSaUHygFeh6Qd933EoSw==",
+      "path": "sixlabors.imagesharp/3.1.11",
+      "hashPath": "sixlabors.imagesharp.3.1.11.nupkg.sha512"
     },
     "StbiSharp/1.1.0": {
       "type": "package",
@@ -1502,26 +1393,12 @@
       "path": "stbisharp/1.1.0",
       "hashPath": "stbisharp.1.1.0.nupkg.sha512"
     },
-    "System.AppContext/4.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-3QjO4jNV7PdKkmQAVp9atA+usVnKRwI3Kx1nMwJ93T0LcQfx7pKAYk0nKz5wn1oP5iqlhZuy6RXOFdhr7rDwow==",
-      "path": "system.appcontext/4.1.0",
-      "hashPath": "system.appcontext.4.1.0.nupkg.sha512"
-    },
     "System.Buffers/4.5.1": {
       "type": "package",
       "serviceable": true,
       "sha512": "sha512-Rw7ijyl1qqRS0YQD/WycNst8hUUMgrMH4FCn1nNm27M4VxchZ1js3fVjQaANHO5f3sN4isvP4a+Met9Y4YomAg==",
       "path": "system.buffers/4.5.1",
       "hashPath": "system.buffers.4.5.1.nupkg.sha512"
-    },
-    "System.Collections/4.0.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-YUJGz6eFKqS0V//mLt25vFGrrCvOnsXjlvFQs+KimpwNxug9x0Pzy4PlFMU3Q2IzqAa9G2L4LsK3+9vCBK7oTg==",
-      "path": "system.collections/4.0.11",
-      "hashPath": "system.collections.4.0.11.nupkg.sha512"
     },
     "System.Collections.Immutable/1.7.1": {
       "type": "package",
@@ -1537,62 +1414,6 @@
       "path": "system.componentmodel.annotations/5.0.0",
       "hashPath": "system.componentmodel.annotations.5.0.0.nupkg.sha512"
     },
-    "System.Diagnostics.Debug/4.0.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-w5U95fVKHY4G8ASs/K5iK3J5LY+/dLFd4vKejsnI/ZhBsWS9hQakfx3Zr7lRWKg4tAw9r4iktyvsTagWkqYCiw==",
-      "path": "system.diagnostics.debug/4.0.11",
-      "hashPath": "system.diagnostics.debug.4.0.11.nupkg.sha512"
-    },
-    "System.Dynamic.Runtime/4.0.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-db34f6LHYM0U0JpE+sOmjar27BnqTVkbLJhgfwMpTdgTigG/Hna3m2MYVwnFzGGKnEJk2UXFuoVTr8WUbU91/A==",
-      "path": "system.dynamic.runtime/4.0.11",
-      "hashPath": "system.dynamic.runtime.4.0.11.nupkg.sha512"
-    },
-    "System.Globalization/4.0.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-B95h0YLEL2oSnwF/XjqSWKnwKOy/01VWkNlsCeMTFJLLabflpGV26nK164eRs5GiaRSBGpOxQ3pKoSnnyZN5pg==",
-      "path": "system.globalization/4.0.11",
-      "hashPath": "system.globalization.4.0.11.nupkg.sha512"
-    },
-    "System.IO/4.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-3KlTJceQc3gnGIaHZ7UBZO26SHL1SHE4ddrmiwumFnId+CEHP+O8r386tZKaE6zlk5/mF8vifMBzHj9SaXN+mQ==",
-      "path": "system.io/4.1.0",
-      "hashPath": "system.io.4.1.0.nupkg.sha512"
-    },
-    "System.IO.FileSystem/4.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-IBErlVq5jOggAD69bg1t0pJcHaDbJbWNUZTPI96fkYWzwYbN6D9wRHMULLDd9dHsl7C2YsxXL31LMfPI1SWt8w==",
-      "path": "system.io.filesystem/4.0.1",
-      "hashPath": "system.io.filesystem.4.0.1.nupkg.sha512"
-    },
-    "System.IO.FileSystem.Primitives/4.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-kWkKD203JJKxJeE74p8aF8y4Qc9r9WQx4C0cHzHPrY3fv/L/IhWnyCHaFJ3H1QPOH6A93whlQ2vG5nHlBDvzWQ==",
-      "path": "system.io.filesystem.primitives/4.0.1",
-      "hashPath": "system.io.filesystem.primitives.4.0.1.nupkg.sha512"
-    },
-    "System.Linq/4.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-bQ0iYFOQI0nuTnt+NQADns6ucV4DUvMdwN6CbkB1yj8i7arTGiTN5eok1kQwdnnNWSDZfIUySQY+J3d5KjWn0g==",
-      "path": "system.linq/4.1.0",
-      "hashPath": "system.linq.4.1.0.nupkg.sha512"
-    },
-    "System.Linq.Expressions/4.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-I+y02iqkgmCAyfbqOmSDOgqdZQ5tTj80Akm5BPSS8EeB0VGWdy6X1KCoYe8Pk6pwDoAKZUOdLVxnTJcExiv5zw==",
-      "path": "system.linq.expressions/4.1.0",
-      "hashPath": "system.linq.expressions.4.1.0.nupkg.sha512"
-    },
     "System.Memory/4.5.4": {
       "type": "package",
       "serviceable": true,
@@ -1607,48 +1428,6 @@
       "path": "system.numerics.tensors/8.0.0",
       "hashPath": "system.numerics.tensors.8.0.0.nupkg.sha512"
     },
-    "System.ObjectModel/4.0.12": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-tAgJM1xt3ytyMoW4qn4wIqgJYm7L7TShRZG4+Q4Qsi2PCcj96pXN7nRywS9KkB3p/xDUjc2HSwP9SROyPYDYKQ==",
-      "path": "system.objectmodel/4.0.12",
-      "hashPath": "system.objectmodel.4.0.12.nupkg.sha512"
-    },
-    "System.Reflection/4.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-JCKANJ0TI7kzoQzuwB/OoJANy1Lg338B6+JVacPl4TpUwi3cReg3nMLplMq2uqYfHFQpKIlHAUVAJlImZz/4ng==",
-      "path": "system.reflection/4.1.0",
-      "hashPath": "system.reflection.4.1.0.nupkg.sha512"
-    },
-    "System.Reflection.Emit/4.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-P2wqAj72fFjpP6wb9nSfDqNBMab+2ovzSDzUZK7MVIm54tBJEPr9jWfSjjoTpPwj1LeKcmX3vr0ttyjSSFM47g==",
-      "path": "system.reflection.emit/4.0.1",
-      "hashPath": "system.reflection.emit.4.0.1.nupkg.sha512"
-    },
-    "System.Reflection.Emit.ILGeneration/4.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-Ov6dU8Bu15Bc7zuqttgHF12J5lwSWyTf1S+FJouUXVMSqImLZzYaQ+vRr1rQ0OZ0HqsrwWl4dsKHELckQkVpgA==",
-      "path": "system.reflection.emit.ilgeneration/4.0.1",
-      "hashPath": "system.reflection.emit.ilgeneration.4.0.1.nupkg.sha512"
-    },
-    "System.Reflection.Emit.Lightweight/4.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-sSzHHXueZ5Uh0OLpUQprhr+ZYJrLPA2Cmr4gn0wj9+FftNKXx8RIMKvO9qnjk2ebPYUjZ+F2ulGdPOsvj+MEjA==",
-      "path": "system.reflection.emit.lightweight/4.0.1",
-      "hashPath": "system.reflection.emit.lightweight.4.0.1.nupkg.sha512"
-    },
-    "System.Reflection.Extensions/4.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-GYrtRsZcMuHF3sbmRHfMYpvxZoIN2bQGrYGerUiWLEkqdEUQZhH3TRSaC/oI4wO0II1RKBPlpIa1TOMxIcOOzQ==",
-      "path": "system.reflection.extensions/4.0.1",
-      "hashPath": "system.reflection.extensions.4.0.1.nupkg.sha512"
-    },
     "System.Reflection.Metadata/1.8.1": {
       "type": "package",
       "serviceable": true,
@@ -1656,89 +1435,12 @@
       "path": "system.reflection.metadata/1.8.1",
       "hashPath": "system.reflection.metadata.1.8.1.nupkg.sha512"
     },
-    "System.Reflection.Primitives/4.0.1": {
+    "System.Runtime.CompilerServices.Unsafe/6.0.0-rc.1.21451.13": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-4inTox4wTBaDhB7V3mPvp9XlCbeGYWVEM9/fXALd52vNEAVisc1BoVWQPuUuD0Ga//dNbA/WeMy9u9mzLxGTHQ==",
-      "path": "system.reflection.primitives/4.0.1",
-      "hashPath": "system.reflection.primitives.4.0.1.nupkg.sha512"
-    },
-    "System.Reflection.TypeExtensions/4.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-tsQ/ptQ3H5FYfON8lL4MxRk/8kFyE0A+tGPXmVP967cT/gzLHYxIejIYSxp4JmIeFHVP78g/F2FE1mUUTbDtrg==",
-      "path": "system.reflection.typeextensions/4.1.0",
-      "hashPath": "system.reflection.typeextensions.4.1.0.nupkg.sha512"
-    },
-    "System.Resources.ResourceManager/4.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-TxwVeUNoTgUOdQ09gfTjvW411MF+w9MBYL7AtNVc+HtBCFlutPLhUCdZjNkjbhj3bNQWMdHboF0KIWEOjJssbA==",
-      "path": "system.resources.resourcemanager/4.0.1",
-      "hashPath": "system.resources.resourcemanager.4.0.1.nupkg.sha512"
-    },
-    "System.Runtime/4.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-v6c/4Yaa9uWsq+JMhnOFewrYkgdNHNG2eMKuNqRn8P733rNXeRCGvV5FkkjBXn2dbVkPXOsO0xjsEeM1q2zC0g==",
-      "path": "system.runtime/4.1.0",
-      "hashPath": "system.runtime.4.1.0.nupkg.sha512"
-    },
-    "System.Runtime.CompilerServices.Unsafe/6.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg==",
-      "path": "system.runtime.compilerservices.unsafe/6.0.0",
-      "hashPath": "system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
-    },
-    "System.Runtime.Extensions/4.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-CUOHjTT/vgP0qGW22U4/hDlOqXmcPq5YicBaXdUR2UiUoLwBT+olO6we4DVbq57jeX5uXH2uerVZhf0qGj+sVQ==",
-      "path": "system.runtime.extensions/4.1.0",
-      "hashPath": "system.runtime.extensions.4.1.0.nupkg.sha512"
-    },
-    "System.Runtime.Handles/4.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-nCJvEKguXEvk2ymk1gqj625vVnlK3/xdGzx0vOKicQkoquaTBJTP13AIYkocSUwHCLNBwUbXTqTWGDxBTWpt7g==",
-      "path": "system.runtime.handles/4.0.1",
-      "hashPath": "system.runtime.handles.4.0.1.nupkg.sha512"
-    },
-    "System.Runtime.InteropServices/4.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-16eu3kjHS633yYdkjwShDHZLRNMKVi/s0bY8ODiqJ2RfMhDMAwxZaUaWVnZ2P71kr/or+X9o/xFWtNqz8ivieQ==",
-      "path": "system.runtime.interopservices/4.1.0",
-      "hashPath": "system.runtime.interopservices.4.1.0.nupkg.sha512"
-    },
-    "System.Runtime.InteropServices.RuntimeInformation/4.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-hWPhJxc453RCa8Z29O91EmfGeZIHX1ZH2A8L6lYQVSaKzku2DfArSfMEb1/MYYzPQRJZeu0c9dmYeJKxW5Fgng==",
-      "path": "system.runtime.interopservices.runtimeinformation/4.0.0",
-      "hashPath": "system.runtime.interopservices.runtimeinformation.4.0.0.nupkg.sha512"
-    },
-    "System.Text.Encoding/4.0.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-U3gGeMlDZXxCEiY4DwVLSacg+DFWCvoiX+JThA/rvw37Sqrku7sEFeVBBBMBnfB6FeZHsyDx85HlKL19x0HtZA==",
-      "path": "system.text.encoding/4.0.11",
-      "hashPath": "system.text.encoding.4.0.11.nupkg.sha512"
-    },
-    "System.Threading/4.0.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-N+3xqIcg3VDKyjwwCGaZ9HawG9aC6cSDI+s7ROma310GQo8vilFZa86hqKppwTHleR/G0sfOzhvgnUxWCR/DrQ==",
-      "path": "system.threading/4.0.11",
-      "hashPath": "system.threading.4.0.11.nupkg.sha512"
-    },
-    "System.Threading.Tasks/4.0.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-k1S4Gc6IGwtHGT8188RSeGaX86Qw/wnrgNLshJvsdNUOPP9etMmo8S07c+UlOAx4K/xLuN9ivA1bD0LVurtIxQ==",
-      "path": "system.threading.tasks/4.0.11",
-      "hashPath": "system.threading.tasks.4.0.11.nupkg.sha512"
+      "sha512": "sha512-B4MhG+nG2BX3Z0WR6MRG0YHCZKTskVEcP1M2Al3vWmMRgPuZgvAQ/bGP4gZqoVBWxJqzjgK5rs5o6i5XSfg2Jg==",
+      "path": "system.runtime.compilerservices.unsafe/6.0.0-rc.1.21451.13",
+      "hashPath": "system.runtime.compilerservices.unsafe.6.0.0-rc.1.21451.13.nupkg.sha512"
     },
     "Vortice.D3DCompiler/2.4.2": {
       "type": "package",

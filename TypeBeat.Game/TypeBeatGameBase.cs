@@ -1,6 +1,7 @@
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Textures; // Add this using directive
 using osu.Framework.IO.Stores;
 using osuTK;
 using TypeBeat.Resources;
@@ -9,15 +10,16 @@ namespace TypeBeat.Game
 {
     public partial class TypeBeatGameBase : osu.Framework.Game
     {
-
+        private DependencyContainer dependencies;
         protected override Container<Drawable> Content { get; }
+
+        protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent) =>
+            dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
         protected TypeBeatGameBase()
         {
-            // Ensure game and tests scale with window size and screen DPI.
             base.Content.Add(Content = new DrawSizePreservingFillContainer
             {
-                // You may want to change TargetDrawSize to your "default" resolution, which will decide how things scale and position when using absolute coordinates.
                 TargetDrawSize = new Vector2(1366, 768)
             });
         }
@@ -26,6 +28,9 @@ namespace TypeBeat.Game
         private void load()
         {
             Resources.AddStore(new DllResourceStore(typeof(TypeBeatResources).Assembly));
+            dependencies.CacheAs(new TextureStore(Host.Renderer, new TextureLoaderStore(Resources)));
+            Resources.AddStore(new DllResourceStore(TypeBeatResources.ResourceAssembly));
+            AddFont(Resources, "Fonts/Kodchasan");
         }
     }
 }

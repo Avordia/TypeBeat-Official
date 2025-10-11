@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TypeBeat.iOS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6252f49280e83f0bb3bfea92bf4ad03e8e39e9dc")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fa6002e118fb68a673cf63c37135438ba4ae411a")]
 [assembly: System.Reflection.AssemblyProductAttribute("TypeBeat.iOS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TypeBeat.iOS")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Textures;
 using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
@@ -16,6 +17,13 @@ namespace TypeBeat.Game
         [BackgroundDependencyLoader]
         private void load(GameHost host)
         {
+            var dllResourceStore = new DllResourceStore(typeof(TypeBeatResources).Assembly);
+            var fontTextureStore = new TextureLoaderStore(new NamespacedResourceStore<byte[]>(dllResourceStore, "Fonts"));
+
+            var fontStore = new FontStore(host.Renderer, fontTextureStore, 20);
+
+            Fonts.AddStore(fontStore);
+
             gameStorage = host.Storage;
             Child = screenStack = new ScreenStack { RelativeSizeAxes = Axes.Both };
         }
@@ -23,9 +31,7 @@ namespace TypeBeat.Game
         protected override void LoadComplete()
         {
             base.LoadComplete();
-
             performFirstRunImport();
-
             screenStack.Push(new MainScreen());
         }
 
@@ -34,21 +40,15 @@ namespace TypeBeat.Game
             Storage songsStorage = gameStorage.GetStorageForDirectory("Songs");
             const string default_beatmap = "DreamLantern.tbbp";
 
-            if (!songsStorage.Exists(default_beatmap))
-            {
-                var resources = new DllResourceStore(typeof(TypeBeatResources).Assembly);
+            if (songsStorage.Exists(default_beatmap)) return;
 
-                // --- CORRECTED RESOURCE PATH ---
-                // Use the exact path shown in the ResourceFinderTestScene
-                using (var stream = resources.GetStream("initializer/DreamLantern.tbbp"))
+            using (var stream = Resources.GetStream("initializer/DreamLantern.tbbp"))
+            {
+                if (stream == null) return;
+
+                using (var writeStream = songsStorage.GetStream(default_beatmap, FileAccess.Write))
                 {
-                    if (stream != null)
-                    {
-                        using (var writeStream = songsStorage.GetStream(default_beatmap, FileAccess.Write))
-                        {
-                            stream.CopyTo(writeStream);
-                        }
-                    }
+                    stream.CopyTo(writeStream);
                 }
             }
         }

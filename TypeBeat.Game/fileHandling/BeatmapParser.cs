@@ -32,9 +32,8 @@ namespace TypeBeat.Game.fileHandling
 
                 beatpack.MusicPath = musicEntry.Name;
 
-                // --- SOLUTION: Look for both .jpg and .png files ---
-                var backgroundEntry = archive.Entries.FirstOrDefault(e => 
-                    e.Name.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || 
+                var backgroundEntry = archive.Entries.FirstOrDefault(e =>
+                    e.Name.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                     e.Name.EndsWith(".png", StringComparison.OrdinalIgnoreCase));
 
                 beatpack.BackgroundImagePath = backgroundEntry?.Name;
@@ -47,7 +46,7 @@ namespace TypeBeat.Game.fileHandling
 
             return beatpack;
         }
-
+        
         public static Beatmap ParseTbmd(string filePath)
         {
             if (!File.Exists(filePath))

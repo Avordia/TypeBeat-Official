@@ -55,6 +55,10 @@
             "NUnit3TestAdapter": {
               "target": "Package",
               "version": "[4.4.2, )"
+            },
+            "ppy.osu.Framework": {
+              "target": "Package",
+              "version": "[2025.1008.0, )"
             }
           },
           "imports": [
@@ -141,7 +145,11 @@
           "dependencies": {
             "ppy.osu.Framework": {
               "target": "Package",
-              "version": "[2024.1224.0, )"
+              "version": "[2025.1008.0, )"
+            },
+            "ppy.osu.Game.Resources": {
+              "target": "Package",
+              "version": "[2025.1006.0, )"
             }
           },
           "imports": [
@@ -217,6 +225,12 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
+          "dependencies": {
+            "ppy.osu.Framework": {
+              "target": "Package",
+              "version": "[2025.1008.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

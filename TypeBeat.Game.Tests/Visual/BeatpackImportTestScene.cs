@@ -8,7 +8,6 @@ using osu.Framework.Testing;
 using osuTK;
 using osuTK.Graphics;
 using TypeBeat.Game.fileHandling; 
-using osuTK.Graphics;
 
 namespace TypeBeat.Game.Tests.Visual
 {
