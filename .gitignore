@@ -1,17 +1,52 @@
+# --- C# / .NET / Visual Studio ---
+
+# Build Artifacts & Output
+# This is the most important section to prevent committing compiled code.
 [Bb]in/
 [Oo]bj/
-[Dd]ebug/
-[Rr]elease/
+publish/
+
+# NuGet package restore files
+*.nupkg
+packages/
+
+# User-specific files & IDE settings
+# Visual Studio
 .vs/
 *.user
 *.suo
+*.sln.docstates
+# JetBrains Rider
+.idea/
 
-*.nupkg
+# Test Results & Coverage
+TestResults/
+*.trx
+*.coverlet.json
+
+# Cache, logs, and local databases
 *.cache
-packages/
-
 *.log
 *.bak
 *.sqlite
 
-TypeBeat.Desktop/bin/
+# Runtime-generated files
+*.vshost.*
+*.dotCover
+
+# --- OS-specific files ---
+# Windows
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- Environment & Secret files ---
+# Never commit secrets or local environment variables!
+*.env
+secrets.json
+appsettings.Development.json
