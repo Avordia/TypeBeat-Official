@@ -9,7 +9,7 @@ namespace TypeBeat.Game.Tests
         {
             using (GameHost host = Host.GetSuitableDesktopHost("visual-tests"))
             using (var game = new TypeBeatTestBrowser())
-                host.Run(game);
+            host.Run(game);
         }
     }
 }

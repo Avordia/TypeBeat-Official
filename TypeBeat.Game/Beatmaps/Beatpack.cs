@@ -9,5 +9,6 @@ namespace TypeBeat.Game.Beatmaps
         public string VideoPath { get; set; }
         public string KeyPressSoundPath { get; set; }
         public string SpacePressSoundPath { get; set; }
+        
     }
 }

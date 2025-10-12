@@ -9,7 +9,7 @@ using TypeBeat.Resources;
 namespace TypeBeat.Game
 {
     public partial class TypeBeatGameBase : osu.Framework.Game
-    {
+    {                
         private DependencyContainer dependencies;
         protected override Container<Drawable> Content { get; }
 

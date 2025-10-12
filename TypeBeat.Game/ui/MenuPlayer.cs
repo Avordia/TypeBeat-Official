@@ -1,8 +1,11 @@
 using System;
+using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
 using osuTK;
 using osuTK.Graphics;
@@ -11,76 +14,127 @@ namespace TypeBeat.Game.ui
 {
     public partial class MenuPlayer : CompositeDrawable
     {
+        public readonly Bindable<bool> IsPlaying = new Bindable<bool>(true);
         public Action OnPrevious;
-        public Action OnPause;
+        public Action OnTogglePlay;
         public Action OnNext;
 
-        private readonly Button prevButton;
-        private readonly Button pauseButton;
-        private readonly Button nextButton;
+        private Button prevButton;
+        private Button playPauseButton;
+        private Button nextButton;
 
-        public MenuPlayer()
+        private Texture texPrev;
+        private Texture texPlay;
+        private Texture texPause;
+        private Texture texNext;
+
+        public Vector2 Spacing { get; internal set; }
+
+        [BackgroundDependencyLoader]
+        private void load(TextureStore textures)
         {
-            Anchor = Anchor.BottomCentre;
-            Origin = Anchor.BottomCentre;
-            Margin = new MarginPadding { Bottom = 50 };
-            AutoSizeAxes = Axes.Y;
-            Width = 300;
+            texPrev = textures.Get("images/audioplayer/AudioPlayerPrev.png");
+            texPlay = textures.Get("images/audioplayer/AudioPlayerPlay.png");
+            texPause = textures.Get("images/audioplayer/AudioPlayerPause.png");
+            texNext = textures.Get("images/audioplayer/AudioPlayerNext.png");
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+            Margin = new MarginPadding { Bottom = 25 };
 
             InternalChild = new FillFlowContainer
             {
-                RelativeSizeAxes = Axes.X,
-                AutoSizeAxes = Axes.Y,
+                AutoSizeAxes = Axes.Both,
                 Direction = FillDirection.Horizontal,
                 Spacing = new Vector2(10),
                 Children = new Drawable[]
                 {
-                    prevButton = new Button("Prev") { Action = () => OnPrevious?.Invoke() },
-                    pauseButton = new Button("Pause") { Action = () => OnPause?.Invoke() },
-                    nextButton = new Button("Next") { Action = () => OnNext?.Invoke() }
+                    prevButton = new Button(texPrev)
+                    {
+                        Action = () =>
+                        {
+                            OnPrevious?.Invoke();
+                            IsPlaying.Value = true;
+                        }
+                    },
+                    playPauseButton = new Button(IsPlaying.Value ? texPause : texPlay)
+                    {
+                        Action = () => IsPlaying.Value = !IsPlaying.Value
+                    },
+                    nextButton = new Button(texNext)
+                    {
+                        Action = () =>
+                        {
+                            OnNext?.Invoke();
+                            IsPlaying.Value = true;
+                        }
+                    }
                 }
+            };
+
+            IsPlaying.ValueChanged += e =>
+            {
+                playPauseButton.Texture = e.NewValue ? texPause : texPlay;
+                OnTogglePlay?.Invoke();
             };
         }
 
         private partial class Button : ClickableContainer
         {
             private readonly Box background;
-            private readonly SpriteText text;
+            private readonly Sprite sprite;
 
-            public Button(string buttonText)
+            public Texture Texture
             {
-                RelativeSizeAxes = Axes.X;
-                Width = 0.33f;
-                Height = 40;
-                Colour = Color4.Gray;
+                get => sprite.Texture;
+                set => sprite.Texture = value;
+            }
 
+            public Button(Texture texture)
+            {
+                Size = new Vector2(15);
                 InternalChildren = new Drawable[]
                 {
                     background = new Box
                     {
                         RelativeSizeAxes = Axes.Both,
                         Colour = Color4.Black,
-                        Alpha = 0.5f
+                        Alpha = 0f
                     },
-                    text = new SpriteText
+                    sprite = new Sprite
                     {
-                        Text = buttonText,
+                        RelativeSizeAxes = Axes.Both,
+                        Texture = texture,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
+                        FillMode = FillMode.Fit,
                     }
                 };
             }
 
             protected override bool OnHover(HoverEvent e)
             {
-                background.FadeTo(0.7f, 100);
-                return base.OnHover(e);
+                this.ScaleTo(1.2f, 200, Easing.OutQuint);
+                return true;
             }
 
             protected override void OnHoverLost(HoverLostEvent e)
             {
-                background.FadeTo(0.5f, 100);
-                base.OnHoverLost(e);
+                this.ScaleTo(1f, 200, Easing.OutQuint);
+            }
+
+            protected override bool OnMouseDown(MouseDownEvent e)
+            {
+                this.ScaleTo(1.1f, 100, Easing.OutQuint);
+                return base.OnMouseDown(e);
+            }
+
+            protected override void OnMouseUp(MouseUpEvent e)
+            {
+                this.ScaleTo(IsHovered ? 1.2f : 1f, 100, Easing.OutQuint);
+                base.OnMouseUp(e);
             }
         }
     }

@@ -20,7 +20,7 @@ namespace TypeBeat.Game
             var dllResourceStore = new DllResourceStore(typeof(TypeBeatResources).Assembly);
             var fontTextureStore = new TextureLoaderStore(new NamespacedResourceStore<byte[]>(dllResourceStore, "Fonts"));
 
-            var fontStore = new FontStore(host.Renderer, fontTextureStore, 20);
+            var fontStore = new FontStore(host.Renderer, fontTextureStore, 96);
 
             Fonts.AddStore(fontStore);
 
@@ -34,7 +34,7 @@ namespace TypeBeat.Game
             performFirstRunImport();
             screenStack.Push(new MainScreen());
         }
-
+    
         private void performFirstRunImport()
         {
             Storage songsStorage = gameStorage.GetStorageForDirectory("Songs");

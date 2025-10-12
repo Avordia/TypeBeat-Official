@@ -13,6 +13,7 @@ using osu.Framework.Graphics.Video;
 using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
+using osuTK; 
 using osuTK.Graphics;
 using TypeBeat.Game.Beatmaps;
 using TypeBeat.Game.fileHandling;
@@ -28,6 +29,7 @@ namespace TypeBeat.Game
         private BeatpackManager beatpackManager;
         private AudioManager audioManager;
         private GameHost host;
+        private SpriteText songTitleText;
 
         [BackgroundDependencyLoader]
         private void load(GameHost host, AudioManager audio)
@@ -39,12 +41,38 @@ namespace TypeBeat.Game
             {
                 beatpackManager = new BeatpackManager(),
                 backgroundContainer = new Container { RelativeSizeAxes = Axes.Both },
-                new MenuPlayer
+                
+            new FillFlowContainer
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Direction = FillDirection.Vertical,
+                AutoSizeAxes = Axes.Both,
+                Children = new Drawable[]
                 {
-                    OnNext = () => beatpackManager.Next(),
-                    OnPrevious = () => beatpackManager.Previous(),
-                    OnPause = () => togglePause()
+                    new CentralLogo
+                    {
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopCentre,
+                        Margin = new MarginPadding { Bottom = 20 }
+                    },
+                    songTitleText = new SpriteText
+                    {
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopCentre,
+                        Font = new FontUsage(size: 10),
+                        Margin = new MarginPadding { Bottom = 20 }
+                    },
+                    new MenuPlayer
+                    {
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopCentre,
+                        OnNext = () => beatpackManager.Next(),
+                        OnPrevious = () => beatpackManager.Previous(),
+                        OnTogglePlay = () => togglePause(),
+                    },
                 }
+            }
             };
 
             beatpackManager.CurrentBeatpack.BindValueChanged(beatpackChanged, true);
@@ -58,8 +86,14 @@ namespace TypeBeat.Game
                 track?.Stop();
                 background?.Expire();
                 backgroundContainer.Child = new Box { RelativeSizeAxes = Axes.Both, Colour = Colour4.Black };
+
+                songTitleText.Text = string.Empty;
                 return;
             }
+
+            var title = newBeatpack.Beatmap?.Title;
+            var artist = newBeatpack.Beatmap?.Artist;
+            songTitleText.Text = string.Join(" - ", new[] { artist, title }.Where(s => !string.IsNullOrEmpty(s)));
 
             var fullPath = newBeatpack.FilePath;
             using (var stream = File.OpenRead(fullPath))
