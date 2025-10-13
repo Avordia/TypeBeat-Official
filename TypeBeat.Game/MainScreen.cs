@@ -30,50 +30,70 @@ namespace TypeBeat.Game
         private AudioManager audioManager;
         private GameHost host;
         private SpriteText songTitleText;
+        private Sprite frameworkCredit;
+        private BeatReactiveSprite mainLogo;
 
         [BackgroundDependencyLoader]
-        private void load(GameHost host, AudioManager audio)
+        private void load(GameHost host, AudioManager audio, TextureStore textures)
         {
             this.host = host;
             audioManager = audio;
-
             InternalChildren = new Drawable[]
             {
                 beatpackManager = new BeatpackManager(),
                 backgroundContainer = new Container { RelativeSizeAxes = Axes.Both },
-                
-            new FillFlowContainer
-            {
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
-                Direction = FillDirection.Vertical,
-                AutoSizeAxes = Axes.Both,
-                Children = new Drawable[]
+
+                new Container
                 {
-                    new CentralLogo
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    RelativeSizeAxes = Axes.Both,
+                    Children = new Drawable[]
                     {
-                        Anchor = Anchor.TopCentre,
-                        Origin = Anchor.TopCentre,
-                        Margin = new MarginPadding { Bottom = 20 }
-                    },
-                    songTitleText = new SpriteText
-                    {
-                        Anchor = Anchor.TopCentre,
-                        Origin = Anchor.TopCentre,
-                        Font = new FontUsage(size: 10),
-                        Margin = new MarginPadding { Bottom = 20 }
-                    },
-                    new MenuPlayer
-                    {
-                        Anchor = Anchor.TopCentre,
-                        Origin = Anchor.TopCentre,
-                        OnNext = () => beatpackManager.Next(),
-                        OnPrevious = () => beatpackManager.Previous(),
-                        OnTogglePlay = () => togglePause(),
-                    },
-                }
-            }
-            };
+                        mainLogo = new BeatReactiveSprite(new Sprite
+                        {
+                            Texture = textures.Get("images/logo/LogoWithText.png"),
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                        })
+                        {
+                            Scale = new Vector2(1f),
+                            Y = -35f,
+                            MaxScalePercentage = 1.1f, 
+                        },
+
+                        frameworkCredit = new Sprite
+                        {
+                            Texture = textures.Get("images/Osu!Framework.png"),
+                            Scale = new Vector2(1.2f),
+                            Anchor = Anchor.BottomCentre,
+                            Origin = Anchor.Centre,
+                            Y = -60, X = 30
+                        },
+
+                        songTitleText = new SpriteText
+                        {
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Y = -15, X = 24,//
+                            Font = new FontUsage(size: 12)
+                        },
+
+                        new MenuPlayer
+                        {
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            OnNext = () => beatpackManager.Next(),
+                            OnPrevious = () => beatpackManager.Previous(),
+                            OnTogglePlay = () => togglePause(),
+                            X = -12, Y= 24.5f, 
+                            Scale= new Vector2(1.1f)//
+
+                        },
+                    }
+                },
+
+            };//
 
             beatpackManager.CurrentBeatpack.BindValueChanged(beatpackChanged, true);
         }
@@ -109,18 +129,18 @@ namespace TypeBeat.Game
                         FillMode = FillMode.Fill,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        Loop = true,
+                        Loop = true, //
                     };
                 }
                 else if (!string.IsNullOrEmpty(newBeatpack.BackgroundImagePath) && beatmapAssetStorage.Exists(newBeatpack.BackgroundImagePath))
                 {
                     var textureStore = new TextureStore(host.Renderer, new TextureLoaderStore(beatmapAssetStorage));
                     background = new Sprite
-                    {
+                    {   
                         RelativeSizeAxes = Axes.Both,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        FillMode = FillMode.Fill,
+                        FillMode = FillMode.Fill, //
                         Texture = textureStore.Get(newBeatpack.BackgroundImagePath)
                     };
                 }
@@ -139,9 +159,11 @@ namespace TypeBeat.Game
                     if (track != null)
                     {
                         track.Looping = true;
+                        mainLogo.SetTrack(track);
                         track.Start();
                     }
                 }
+
             }
         }
 
@@ -154,7 +176,7 @@ namespace TypeBeat.Game
             else
                 track.Start();
 
-            if (background is Video video)
+            if (background is Video)
             {
                 // As a reminder, direct video pause/play isn't simple.
                 // It's tied to the game clock. This can be implemented later.
