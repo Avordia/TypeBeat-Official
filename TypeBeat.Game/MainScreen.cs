@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
@@ -40,10 +41,12 @@ namespace TypeBeat.Game
         private Footer footer;
         
         private bool isInMenuMode;
+    private bool isMenuTransitioning;
         private Dictionary<Drawable, float> initialPositions;
         private const float menu_offset_x = 350f;  
         private const float animation_duration = 400;
-        private bool hasInitializedBeatpack = false; 
+        private const float header_peek_y = -8f;
+        private const float footer_peek_y = 8f;
 
         [BackgroundDependencyLoader]
         private void load(GameHost host, AudioManager audio, TextureStore textures)
@@ -58,13 +61,15 @@ namespace TypeBeat.Game
                 {
                     Anchor = Anchor.TopCentre,
                     Origin = Anchor.TopCentre,
-                    Y = -100,
+                    Y = header_peek_y,
+                    Alpha = 0,
                 },
                 footer = new Footer
                 {
                     Anchor = Anchor.BottomCentre,
                     Origin = Anchor.BottomCentre,
-                    Y = 100,
+                    Y = footer_peek_y,
+                    Alpha = 0,
                 },
                 new Container
                 {
@@ -80,8 +85,6 @@ namespace TypeBeat.Game
                             AutoSizeAxes = Axes.Both,
                             Child = new MenuButton("Play", Colour4.Orange, 15f, dimensions: new Vector2(200, 50), onClick: () => 
                             {
-                                // Simply fade out all UI elements for transition to Song Selection
-                                // Don't call toggleMenuMode - let OnResuming handle re-entering menu mode
                                 mainLogo.FadeOut(400);
                                 songTitleText.FadeOut(400);
                                 menuPlayer.FadeOut(400);
@@ -180,6 +183,9 @@ namespace TypeBeat.Game
             };//
 
             beatpackManager.CurrentBeatpack.BindValueChanged(beatpackChanged, true);
+
+            ChangeInternalChildDepth(header, float.MinValue);
+            ChangeInternalChildDepth(footer, float.MinValue);
         }
 
         private void beatpackChanged(ValueChangedEvent<Beatpack> e)
@@ -249,9 +255,6 @@ namespace TypeBeat.Game
                 }
 
             }
-            
-            // Mark that we've initialized the beatpack at least once
-            hasInitializedBeatpack = true;
         }
 
         private void togglePause()
@@ -273,6 +276,14 @@ namespace TypeBeat.Game
         public override void OnEntering(ScreenTransitionEvent e)
         {
             base.OnEntering(e);
+            
+            // Start with header and footer hidden unless in menu mode
+            if (!isInMenuMode)
+            {
+                header.FadeOut(0);
+                footer.FadeOut(0);
+            }
+            
             track?.Start();
         }
 
@@ -285,24 +296,32 @@ namespace TypeBeat.Game
             Logger.Log($"[MainScreen] backgroundContainer.Child = {backgroundContainer?.Child?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
             Logger.Log($"[MainScreen] isInMenuMode = {isInMenuMode}", LoggingTarget.Runtime, LogLevel.Important);
             
-            // When returning from SongSelection, the backgroundContainer was already
-            // added back via AddBackgroundContainer() in SongSelectionScreen.OnExiting.
-            // We just need to ensure everything is visible and playing.
             
-            // Restore visibility of main elements when returning from song selection
             mainLogo.FadeIn(300);
             songTitleText.FadeIn(300);
             menuPlayer.FadeIn(300);
             
-            // Resume the music
+            if (isInMenuMode)
+            {
+                header.FadeIn(200);
+                footer.FadeIn(200);
+                header.MoveToY(0, 0);
+                footer.MoveToY(0, 0);
+            }
+            else
+            {
+                header.FadeOut(0);
+                footer.FadeOut(0);
+                header.MoveToY(header_peek_y, 0);
+                footer.MoveToY(footer_peek_y, 0);
+            }
+            
             track?.Start();
             
-            // Ensure video continues playing - check the actual child in the container
             if (backgroundContainer?.Child is Video video)
             {
                 Logger.Log($"[MainScreen] Found video in OnResuming. Loop = {video.Loop}, IsAlive = {video.IsAlive}", LoggingTarget.Runtime, LogLevel.Important);
-                // Video should automatically continue as it's tied to the clock,
-                // but we ensure Loop is still set in case it was modified
+
                 video.Loop = true;
             }
             else
@@ -310,15 +329,11 @@ namespace TypeBeat.Game
                 Logger.Log($"[MainScreen] No video found in OnResuming!", LoggingTarget.Runtime, LogLevel.Important);
             }
             
-            // We should still be in menu mode (isInMenuMode = true)
-            // So we just need to restore the menu button visibility
             var menuButtonsContainer = InternalChildren.OfType<Container>().FirstOrDefault(c => c.Name == "Menu Buttons");
             if (menuButtonsContainer != null && isInMenuMode)
             {
                 menuButtonsContainer.FadeIn(300);
-            }
-            
-            // If somehow we're not in menu mode, enter it
+            }            
             if (!isInMenuMode)
                 toggleMenuMode();
         }
@@ -338,21 +353,15 @@ namespace TypeBeat.Game
                 RemoveInternal(container, false);
             
             AddInternal(container);
-            // Ensure background renders BEHIND all UI by giving it the deepest depth.
-            // Other drawables use the default depth (0), so use a very large positive value here.
             ChangeInternalChildDepth(container, float.MaxValue);
             
             Logger.Log($"[MainScreen] After adding: Container.Parent = {container.Parent?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
             Logger.Log($"[MainScreen] backgroundContainer == container: {backgroundContainer == container}", LoggingTarget.Runtime, LogLevel.Important);
             Logger.Log($"[MainScreen] backgroundContainer.Depth = {container.Depth}", LoggingTarget.Runtime, LogLevel.Important);
             
-            // Ensure video resumes playing when background is re-added
             if (container.Child is Video video)
             {
                 Logger.Log($"[MainScreen] Video found in container. Loop = {video.Loop}", LoggingTarget.Runtime, LogLevel.Important);
-                // Video playback is controlled by its Clock which may have been affected
-                // by the reparenting. Since we want it to continue playing, we ensure
-                // it's properly tied to the current clock.
                 video.Loop = true;
             }
             else
@@ -363,17 +372,21 @@ namespace TypeBeat.Game
 
         public void EnterMenuMode()
         {
-            // Restore visibility of main elements
             mainLogo.FadeIn(300);
             songTitleText.FadeIn(300);
             menuPlayer.FadeIn(300);
+            frameworkCredit.FadeIn(300);
             
+            // Always ensure we're in menu mode when resuming
             if (!isInMenuMode)
                 toggleMenuMode();
         }
 
         private void toggleMenuMode()
         {
+            if (isMenuTransitioning)
+                return;
+
             isInMenuMode = !isInMenuMode;
 
             var hoverContainer = mainLogo.Parent as HoverContainer;
@@ -396,26 +409,32 @@ namespace TypeBeat.Game
 
             if (mainLogo.Parent?.Parent is Container centerContainer)
             {
+                centerContainer.ClearTransforms(true);
                 centerContainer.MoveToX(isInMenuMode ? menu_offset_x : 0, animation_duration, Easing.OutExpo);
             }
 
             if (isInMenuMode)
             {
                 frameworkCredit.FadeOut(animation_duration / 2);
+                header.FadeIn(animation_duration / 2);
+                footer.FadeIn(animation_duration / 2);
                 header.MoveToY(0, animation_duration, Easing.OutQuint);
                 footer.MoveToY(0, animation_duration, Easing.OutQuint);
             }
             else
             {
                 frameworkCredit.FadeIn(animation_duration / 2);
-                header.MoveToY(-100, animation_duration, Easing.InQuint);
-                footer.MoveToY(100, animation_duration, Easing.InQuint);
+                header.FadeOut(animation_duration / 2);
+                footer.FadeOut(animation_duration / 2);
+                header.MoveToY(header_peek_y, animation_duration, Easing.InQuint);
+                footer.MoveToY(footer_peek_y, animation_duration, Easing.InQuint);
             }
 
             if (menuButtons != null)
             {
+                menuButtons.ClearTransforms(true);
                 if (isInMenuMode)
-                    menuButtons.Alpha = 1;
+                    menuButtons.FadeTo(1, 0);
 
                 const float button_entry_offset = 600f; 
                 const double button_stagger = 100;     
@@ -430,13 +449,15 @@ namespace TypeBeat.Game
                     if (isInMenuMode)
                     {
                         drawable.X = -button_entry_offset;
+                        drawable.FadeTo(0, 0);
                         drawable.Delay(button_stagger * index)
+                                .FadeIn(button_anim_duration)
                                 .MoveToX(0, button_anim_duration, Easing.OutBack);
                     }
                     else
                     {
                         drawable.Delay(button_stagger * index)
-                                .MoveToX(-button_entry_offset, button_exit_duration, Easing.InQuint);
+                                .FadeOut(button_exit_duration);
                     }
 
                     index++;
@@ -447,6 +468,13 @@ namespace TypeBeat.Game
                     var total = button_exit_duration + button_stagger * (menuButtons.Children.Count - 1);
                     menuButtons.Delay(total).FadeTo(0, 0); 
                 }
+
+                var maxButtonsDuration = isInMenuMode
+                    ? button_anim_duration + button_stagger * (menuButtons.Children.Count - 1)
+                    : button_exit_duration + button_stagger * (menuButtons.Children.Count - 1);
+                var totalDuration = Math.Max(animation_duration, maxButtonsDuration);
+                isMenuTransitioning = true;
+                this.Delay(totalDuration).Schedule(() => isMenuTransitioning = false);
             }
         }
     }
