@@ -48,29 +48,26 @@ namespace TypeBeat.Game
                     Anchor = Anchor.CentreLeft,
                     Origin = Anchor.CentreLeft,
                     RelativeSizeAxes = Axes.Y,
-                    Width = 300,
-                    Padding = new MarginPadding { Left = 50, Vertical = 20 },
+                    X = 60,
+                    Height = 0.8f,
+                    Width = 150,
+                    Padding = new MarginPadding { Left = 10, Vertical = 10 },
                     Children = new Drawable[]
                     {
-                        new Box
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Colour = Colour4.Black,
-                            Alpha = 0.5f
-                        },
                         new BasicScrollContainer
                         {
                             RelativeSizeAxes = Axes.Both,
                             ScrollbarVisible = false,
                             ClampExtension = 20,
+                            CornerRadius =40,
                             Child = new FillFlowContainer
                             {
                                 Name = "Song Thumbnails",
                                 RelativeSizeAxes = Axes.X,
                                 AutoSizeAxes = Axes.Y,
                                 Spacing = new Vector2(0, 10),
-                                Padding = new MarginPadding { Horizontal = 20, Vertical = 10 },
-                                Direction = FillDirection.Vertical
+                                Padding = new MarginPadding { Horizontal = 2, Vertical = 2 },
+                                Direction = FillDirection.Vertical//
                             }
                         }
                     }
@@ -110,10 +107,9 @@ namespace TypeBeat.Game
         {
             Logger.Log($"[SongSelection] OnExiting called", LoggingTarget.Runtime, LogLevel.Important);
             
-            // Remove the background IMMEDIATELY before any animations
+
             removeBackground();
             
-            // Return the background to MainScreen
             Logger.Log($"[SongSelection] Returning background to MainScreen", LoggingTarget.Runtime, LogLevel.Important);
             mainScreen.AddBackgroundContainer(backgroundContainer);
             
@@ -176,18 +172,30 @@ namespace TypeBeat.Game
 
             foreach (var beatpack in beatpackManager.Beatpacks)
             {
-                songContainer.Add(new SongThumbnail(beatpack, textures)
+                var thumbnail = new SongThumbnail(beatpack, textures)
                 {
                     Anchor = Anchor.TopCentre,
                     Origin = Anchor.TopCentre
-                });
+                };
+                
+                // Hook up the OnSelected event
+                thumbnail.OnSelected += handleSongSelected;
+                
+                songContainer.Add(thumbnail);
             }
+        }
+
+        // Handle song selection from thumbnails
+        private void handleSongSelected(Beatpack selectedBeatpack)
+        {
+            // Update the BeatpackManager's current selection
+            beatpackManager.CurrentBeatpack.Value = selectedBeatpack;
+            
+            Logger.Log($"Selected beatpack: {selectedBeatpack.Beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
         }
 
         protected override void Dispose(bool isDisposing)
         {
-            // Background should already be removed in OnExiting
-            // Just ensure it's cleaned up if something went wrong
             if (isDisposing && backgroundContainer.Parent == backgroundLayer)
             {
                 removeBackground();

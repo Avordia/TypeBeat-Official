@@ -423,9 +423,9 @@ namespace TypeBeat.Game
             }
             else
             {
-                frameworkCredit.FadeIn(animation_duration / 2);
-                header.FadeOut(animation_duration / 2);
-                footer.FadeOut(animation_duration / 2);
+                frameworkCredit.FadeIn(animation_duration / 3); // Faster fade-in
+                header.FadeOut(animation_duration / 4); // Snappier fade-out
+                footer.FadeOut(animation_duration / 4); // Snappier fade-out
                 header.MoveToY(header_peek_y, animation_duration, Easing.InQuint);
                 footer.MoveToY(footer_peek_y, animation_duration, Easing.InQuint);
             }
@@ -437,9 +437,9 @@ namespace TypeBeat.Game
                     menuButtons.FadeTo(1, 0);
 
                 const float button_entry_offset = 600f; 
-                const double button_stagger = 100;     
+                const double button_stagger = 50;      // Reduced stagger time for snappier exit
                 const double button_anim_duration = 500; 
-                const double button_exit_duration = 300; 
+                const double button_exit_duration = 150; // Significantly reduced exit duration for snappier fade out
 
                 int index = 0;
                 foreach (var drawable in menuButtons.Children)
@@ -457,7 +457,7 @@ namespace TypeBeat.Game
                     else
                     {
                         drawable.Delay(button_stagger * index)
-                                .FadeOut(button_exit_duration);
+                                .FadeOut(button_exit_duration, Easing.OutQuint); // Added easing for snappy feel
                     }
 
                     index++;

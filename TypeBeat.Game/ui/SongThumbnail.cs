@@ -1,5 +1,6 @@
 using System.IO;
 using System.IO.Compression;
+using System;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -17,12 +18,15 @@ namespace TypeBeat.Game.ui
         private readonly Container content;
         private readonly Sprite thumbnail;
         private readonly Beatpack beatpack;
+        
+        // Event that fires when this thumbnail is selected
+        public event Action<Beatpack> OnSelected;
 
         public SongThumbnail(Beatpack beatpack, TextureStore textures)
         {
             this.beatpack = beatpack;
             
-            Size = new Vector2(200);
+            Size = new Vector2(100);
             Masking = true;
             CornerRadius = 10;
 
@@ -83,13 +87,13 @@ namespace TypeBeat.Game.ui
 
         protected override bool OnHover(HoverEvent e)
         {
-            content.ScaleTo(1.1f, 200, Easing.OutQuint);
+            this.ScaleTo(1.1f, 200, Easing.OutQuint);
             return base.OnHover(e);
         }
 
         protected override void OnHoverLost(HoverLostEvent e)
         {
-            content.ScaleTo(1f, 200, Easing.OutQuint);
+            this.ScaleTo(1f, 200, Easing.OutQuint);
             base.OnHoverLost(e);
         }
 
@@ -98,6 +102,9 @@ namespace TypeBeat.Game.ui
             this.ScaleTo(0.95f, 100, Easing.OutQuint)
                 .Then()
                 .ScaleTo(1f, 100, Easing.OutQuint);
+
+            // Trigger selection event with this beatpack
+            OnSelected?.Invoke(beatpack);
 
             return base.OnClick(e);
         }
