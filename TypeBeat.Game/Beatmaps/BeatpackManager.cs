@@ -16,6 +16,7 @@ namespace TypeBeat.Game.Beatmaps
         private int currentIndex = -1;
 
         public readonly Bindable<Beatpack> CurrentBeatpack = new Bindable<Beatpack>();
+        public IReadOnlyList<Beatpack> Beatpacks => beatpacks;
 
         [BackgroundDependencyLoader]
         private void load(GameHost host)

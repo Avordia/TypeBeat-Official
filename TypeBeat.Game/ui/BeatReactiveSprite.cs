@@ -5,6 +5,7 @@ using osu.Framework.Audio.Track;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Input.Events;
 
 namespace TypeBeat.Game.ui
 {
@@ -17,11 +18,19 @@ namespace TypeBeat.Game.ui
         private int amplitude_buffer_index;
         private float initialScale;
         
+        public Action OnClickAction { get; set; }
+        
         /// <summary>
         /// The maximum scale as a percentage of the base size.
         /// 1.0 = no change, 1.5 = 50% larger, etc.
         /// </summary>
         public float MaxScalePercentage { get; set; } = 1.18f;
+        
+        protected override bool OnClick(ClickEvent e)
+        {
+            OnClickAction?.Invoke();
+            return true;
+        }
 
         public BeatReactiveSprite(Sprite sprite)
         {

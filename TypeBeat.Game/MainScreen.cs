@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Track;
@@ -13,6 +14,8 @@ using osu.Framework.Graphics.Video;
 using osu.Framework.IO.Stores;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
+using osu.Framework.Input.Events;
+using osu.Framework.Logging;
 using osuTK; 
 using osuTK.Graphics;
 using TypeBeat.Game.Beatmaps;
@@ -32,6 +35,15 @@ namespace TypeBeat.Game
         private SpriteText songTitleText;
         private Sprite frameworkCredit;
         private BeatReactiveSprite mainLogo;
+        private MenuPlayer menuPlayer;
+        private Header header;
+        private Footer footer;
+        
+        private bool isInMenuMode;
+        private Dictionary<Drawable, float> initialPositions;
+        private const float menu_offset_x = 350f;  
+        private const float animation_duration = 400;
+        private bool hasInitializedBeatpack = false; 
 
         [BackgroundDependencyLoader]
         private void load(GameHost host, AudioManager audio, TextureStore textures)
@@ -42,7 +54,70 @@ namespace TypeBeat.Game
             {
                 beatpackManager = new BeatpackManager(),
                 backgroundContainer = new Container { RelativeSizeAxes = Axes.Both },
+                header = new Header
+                {
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.TopCentre,
+                    Y = -100,
+                },
+                footer = new Footer
+                {
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
+                    Y = 100,
+                },
+                new Container
+                {
+                    Name = "Menu Buttons",
+                    Alpha = 0, 
+                    Position = new Vector2(250, 250), 
+                    AutoSizeAxes = Axes.Both,
+                    Children = new Drawable[]
+                    {
+                        new Container
+                        {
+                            Y = 0,
+                            AutoSizeAxes = Axes.Both,
+                            Child = new MenuButton("Play", Colour4.Orange, 15f, dimensions: new Vector2(200, 50), onClick: () => 
+                            {
+                                // Simply fade out all UI elements for transition to Song Selection
+                                // Don't call toggleMenuMode - let OnResuming handle re-entering menu mode
+                                mainLogo.FadeOut(400);
+                                songTitleText.FadeOut(400);
+                                menuPlayer.FadeOut(400);
+                                frameworkCredit.FadeOut(400);
 
+                                var menuButtonsContainer = InternalChildren.OfType<Container>().FirstOrDefault(c => c.Name == "Menu Buttons");
+                                menuButtonsContainer?.FadeOut(400);
+
+                                this.Delay(400).Schedule(() =>
+                                {
+                                    RemoveInternal(backgroundContainer, false);
+                                    var songSelection = new SongSelectionScreen(beatpackManager, backgroundContainer, this);
+                                    this.Push(songSelection);
+                                });
+                            })
+                        },
+                        new Container
+                        {
+                            Y = 60,
+                            AutoSizeAxes = Axes.Both,
+                            Child = new MenuButton("Create", Colour4.YellowGreen, 15f, dimensions: new Vector2(200, 50))
+                        },
+                        new Container
+                        {
+                            Y = 120,
+                            AutoSizeAxes = Axes.Both,
+                            Child = new MenuButton("Explore", Colour4.DeepSkyBlue, 15f, dimensions: new Vector2(200, 50))
+                        },
+                        new Container
+                        {
+                            Y = 180,
+                            AutoSizeAxes = Axes.Both,
+                            Child = new MenuButton("Options", Colour4.HotPink, 15f, dimensions: new Vector2(200, 50))
+                        }
+                    }
+                },
                 new Container
                 {
                     Anchor = Anchor.Centre,
@@ -50,16 +125,45 @@ namespace TypeBeat.Game
                     RelativeSizeAxes = Axes.Both,
                     Children = new Drawable[]
                     {
-                        mainLogo = new BeatReactiveSprite(new Sprite
+                        new HoverContainer
                         {
-                            Texture = textures.Get("images/logo/LogoWithText.png"),
                             Anchor = Anchor.Centre,
                             Origin = Anchor.Centre,
-                        })
-                        {
-                            Scale = new Vector2(1f),
-                            Y = -35f,
-                            MaxScalePercentage = 1.1f, 
+                            AutoSizeAxes = Axes.Both,
+                            Children = new Drawable[]
+                            {
+                                mainLogo = new BeatReactiveSprite(new Sprite
+                                {
+                                    Texture = textures.Get("images/logo/LogoWithText.png"),
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                })
+                                {
+                                    Scale = new Vector2(1.2f),
+                                    Y = -35f,
+                                    MaxScalePercentage = 1.12f,
+                                    OnClickAction = toggleMenuMode
+                                },
+
+                                songTitleText = new SpriteText
+                                {
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                    Y = -15, X = 24,
+                                    Font = new FontUsage(size: 12)
+                                },
+
+                                menuPlayer = new MenuPlayer
+                                {
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                    OnNext = () => beatpackManager.Next(),
+                                    OnPrevious = () => beatpackManager.Previous(),
+                                    OnTogglePlay = () => togglePause(),
+                                    X = -12, Y= 24.5f, 
+                                    Scale= new Vector2(1.1f)
+                                },
+                            }
                         },
 
                         frameworkCredit = new Sprite
@@ -69,26 +173,6 @@ namespace TypeBeat.Game
                             Anchor = Anchor.BottomCentre,
                             Origin = Anchor.Centre,
                             Y = -60, X = 30
-                        },
-
-                        songTitleText = new SpriteText
-                        {
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            Y = -15, X = 24,//
-                            Font = new FontUsage(size: 12)
-                        },
-
-                        new MenuPlayer
-                        {
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            OnNext = () => beatpackManager.Next(),
-                            OnPrevious = () => beatpackManager.Previous(),
-                            OnTogglePlay = () => togglePause(),
-                            X = -12, Y= 24.5f, 
-                            Scale= new Vector2(1.1f)//
-
                         },
                     }
                 },
@@ -140,7 +224,7 @@ namespace TypeBeat.Game
                         RelativeSizeAxes = Axes.Both,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        FillMode = FillMode.Fill, //
+                        FillMode = FillMode.Fill, 
                         Texture = textureStore.Get(newBeatpack.BackgroundImagePath)
                     };
                 }
@@ -165,6 +249,9 @@ namespace TypeBeat.Game
                 }
 
             }
+            
+            // Mark that we've initialized the beatpack at least once
+            hasInitializedBeatpack = true;
         }
 
         private void togglePause()
@@ -189,10 +276,178 @@ namespace TypeBeat.Game
             track?.Start();
         }
 
+        public override void OnResuming(ScreenTransitionEvent e)
+        {
+            base.OnResuming(e);
+            
+            Logger.Log($"[MainScreen] OnResuming called", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[MainScreen] backgroundContainer.Parent = {backgroundContainer?.Parent?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[MainScreen] backgroundContainer.Child = {backgroundContainer?.Child?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[MainScreen] isInMenuMode = {isInMenuMode}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // When returning from SongSelection, the backgroundContainer was already
+            // added back via AddBackgroundContainer() in SongSelectionScreen.OnExiting.
+            // We just need to ensure everything is visible and playing.
+            
+            // Restore visibility of main elements when returning from song selection
+            mainLogo.FadeIn(300);
+            songTitleText.FadeIn(300);
+            menuPlayer.FadeIn(300);
+            
+            // Resume the music
+            track?.Start();
+            
+            // Ensure video continues playing - check the actual child in the container
+            if (backgroundContainer?.Child is Video video)
+            {
+                Logger.Log($"[MainScreen] Found video in OnResuming. Loop = {video.Loop}, IsAlive = {video.IsAlive}", LoggingTarget.Runtime, LogLevel.Important);
+                // Video should automatically continue as it's tied to the clock,
+                // but we ensure Loop is still set in case it was modified
+                video.Loop = true;
+            }
+            else
+            {
+                Logger.Log($"[MainScreen] No video found in OnResuming!", LoggingTarget.Runtime, LogLevel.Important);
+            }
+            
+            // We should still be in menu mode (isInMenuMode = true)
+            // So we just need to restore the menu button visibility
+            var menuButtonsContainer = InternalChildren.OfType<Container>().FirstOrDefault(c => c.Name == "Menu Buttons");
+            if (menuButtonsContainer != null && isInMenuMode)
+            {
+                menuButtonsContainer.FadeIn(300);
+            }
+            
+            // If somehow we're not in menu mode, enter it
+            if (!isInMenuMode)
+                toggleMenuMode();
+        }
+
         public override bool OnExiting(ScreenExitEvent e)
         {
             track?.Stop();
             return base.OnExiting(e);
+        }
+
+        public void AddBackgroundContainer(Container container)
+        {
+            Logger.Log($"[MainScreen] AddBackgroundContainer called. Container.Parent = {container.Parent?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[MainScreen] Container.Child = {container.Child?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            if (container.Parent != null)
+                RemoveInternal(container, false);
+            
+            AddInternal(container);
+            // Ensure background renders BEHIND all UI by giving it the deepest depth.
+            // Other drawables use the default depth (0), so use a very large positive value here.
+            ChangeInternalChildDepth(container, float.MaxValue);
+            
+            Logger.Log($"[MainScreen] After adding: Container.Parent = {container.Parent?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[MainScreen] backgroundContainer == container: {backgroundContainer == container}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[MainScreen] backgroundContainer.Depth = {container.Depth}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Ensure video resumes playing when background is re-added
+            if (container.Child is Video video)
+            {
+                Logger.Log($"[MainScreen] Video found in container. Loop = {video.Loop}", LoggingTarget.Runtime, LogLevel.Important);
+                // Video playback is controlled by its Clock which may have been affected
+                // by the reparenting. Since we want it to continue playing, we ensure
+                // it's properly tied to the current clock.
+                video.Loop = true;
+            }
+            else
+            {
+                Logger.Log($"[MainScreen] No video in container. Child type: {container.Child?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
+            }
+        }
+
+        public void EnterMenuMode()
+        {
+            // Restore visibility of main elements
+            mainLogo.FadeIn(300);
+            songTitleText.FadeIn(300);
+            menuPlayer.FadeIn(300);
+            
+            if (!isInMenuMode)
+                toggleMenuMode();
+        }
+
+        private void toggleMenuMode()
+        {
+            isInMenuMode = !isInMenuMode;
+
+            var hoverContainer = mainLogo.Parent as HoverContainer;
+            
+            if (isInMenuMode)
+                hoverContainer?.FadeColour(Colour4.White, animation_duration).Then().OnComplete(d => d.Alpha = 1f);
+            else
+                hoverContainer?.FadeColour(Colour4.White, animation_duration).Then().OnComplete(d => d.Alpha = 1f);
+
+            initialPositions ??= new Dictionary<Drawable, float>
+            {
+                { mainLogo, mainLogo.X },
+                { songTitleText, songTitleText.X },
+                { menuPlayer, menuPlayer.X }
+            };
+
+            var menuButtons = InternalChildren
+                .OfType<Container>()
+                .FirstOrDefault(c => c.Name == "Menu Buttons");
+
+            if (mainLogo.Parent?.Parent is Container centerContainer)
+            {
+                centerContainer.MoveToX(isInMenuMode ? menu_offset_x : 0, animation_duration, Easing.OutExpo);
+            }
+
+            if (isInMenuMode)
+            {
+                frameworkCredit.FadeOut(animation_duration / 2);
+                header.MoveToY(0, animation_duration, Easing.OutQuint);
+                footer.MoveToY(0, animation_duration, Easing.OutQuint);
+            }
+            else
+            {
+                frameworkCredit.FadeIn(animation_duration / 2);
+                header.MoveToY(-100, animation_duration, Easing.InQuint);
+                footer.MoveToY(100, animation_duration, Easing.InQuint);
+            }
+
+            if (menuButtons != null)
+            {
+                if (isInMenuMode)
+                    menuButtons.Alpha = 1;
+
+                const float button_entry_offset = 600f; 
+                const double button_stagger = 100;     
+                const double button_anim_duration = 500; 
+                const double button_exit_duration = 300; 
+
+                int index = 0;
+                foreach (var drawable in menuButtons.Children)
+                {
+                    drawable.ClearTransforms();
+
+                    if (isInMenuMode)
+                    {
+                        drawable.X = -button_entry_offset;
+                        drawable.Delay(button_stagger * index)
+                                .MoveToX(0, button_anim_duration, Easing.OutBack);
+                    }
+                    else
+                    {
+                        drawable.Delay(button_stagger * index)
+                                .MoveToX(-button_entry_offset, button_exit_duration, Easing.InQuint);
+                    }
+
+                    index++;
+                }
+
+                if (!isInMenuMode)
+                {
+                    var total = button_exit_duration + button_stagger * (menuButtons.Children.Count - 1);
+                    menuButtons.Delay(total).FadeTo(0, 0); 
+                }
+            }
         }
     }
 }

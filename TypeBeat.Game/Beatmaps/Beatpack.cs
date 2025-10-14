@@ -1,3 +1,8 @@
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+
 namespace TypeBeat.Game.Beatmaps
 {
     public class Beatpack
@@ -9,6 +14,27 @@ namespace TypeBeat.Game.Beatmaps
         public string VideoPath { get; set; }
         public string KeyPressSoundPath { get; set; }
         public string SpacePressSoundPath { get; set; }
-        
+
+        public Stream GetStream(string path)
+        {
+            if (string.IsNullOrEmpty(FilePath) || !File.Exists(FilePath) || string.IsNullOrEmpty(path))
+                return null;
+
+            using (var archive = ZipFile.OpenRead(FilePath))
+            {
+                var entry = archive.Entries.FirstOrDefault(e => e.FullName.Equals(path, StringComparison.OrdinalIgnoreCase));
+
+                if (entry == null)
+                    return null;
+
+                var ms = new MemoryStream();
+                using (var stream = entry.Open())
+                {
+                    stream.CopyTo(ms);
+                }
+                ms.Position = 0;
+                return ms;
+            }
+        }
     }
 }
