@@ -8,7 +8,7 @@ using osu.Framework.Screens;
 using osuTK;
 using osuTK.Graphics;
 
-namespace TypeBeat.Game.ui
+namespace TypeBeat.Game.Ui
 {
     public partial class MenuButton : ClickableContainer
     {

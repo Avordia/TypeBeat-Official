@@ -7,7 +7,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 
-namespace TypeBeat.Game.ui
+namespace TypeBeat.Game.Ui
 {
     public partial class BeatReactiveSprite : Container
     {

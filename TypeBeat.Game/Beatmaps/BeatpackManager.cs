@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Logging; // <-- Add this using statement
 using osu.Framework.Platform;
-using TypeBeat.Game.fileHandling;
+using TypeBeat.Game.Filehandling;
 
 namespace TypeBeat.Game.Beatmaps
 {
@@ -32,16 +33,41 @@ namespace TypeBeat.Game.Beatmaps
                 try
                 {
                     var fullPath = songsStorage.GetFullPath(file);
+                    Logger.Log($"Attempting to load: {fullPath}");
+                    
+                    // Check if file exists and is accessible
+                    if (!System.IO.File.Exists(fullPath))
+                    {
+                        Logger.Log($"File not found: {fullPath}", LoggingTarget.Runtime, LogLevel.Error);
+                        continue;
+                    }
+                    
+                    // Check file size to detect empty/corrupted files
+                    var fileInfo = new System.IO.FileInfo(fullPath);
+                    Logger.Log($"File size: {fileInfo.Length} bytes");
+                    
+                    if (fileInfo.Length == 0)
+                    {
+                        Logger.Log($"File is empty: {fullPath}", LoggingTarget.Runtime, LogLevel.Error);
+                        continue;
+                    }
+                    
                     var beatpack = BeatmapParser.ParseBeatpack(fullPath);
                     if (beatpack != null)
                     {
                         beatpacks.Add(beatpack);
-                        Logger.Log($"Successfully loaded beatpack: {file}");
+                        var songName = beatpack.Beatmap?.Title ?? Path.GetFileNameWithoutExtension(file);
+                        var starRating = beatpack.Beatmap?.StarRating ?? 0;
+                        Logger.Log($"✓ Successfully loaded beatpack: {songName} (StarRating: {starRating})");
+                    }
+                    else
+                    {
+                        Logger.Log($"Parser returned null for: {file}", LoggingTarget.Runtime, LogLevel.Error);
                     }
                 }
                 catch (Exception e)
                 {
-                    Logger.Error(e, $"Failed to load beatpack {file}");
+                    Logger.Error(e, $"Failed to load beatpack {file}: {e.Message}");
                 }
             }
 
@@ -51,6 +77,10 @@ namespace TypeBeat.Game.Beatmaps
             {
                 currentIndex = 0;
                 CurrentBeatpack.Value = beatpacks[currentIndex];
+            }
+            else
+            {
+                Logger.Log("No beatpacks were successfully loaded!", LoggingTarget.Runtime, LogLevel.Error);
             }
         }
 

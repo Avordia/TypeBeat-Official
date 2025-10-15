@@ -10,7 +10,7 @@ using osu.Framework.Input.Events;
 using osuTK;
 using osuTK.Graphics;
 
-namespace TypeBeat.Game.ui
+namespace TypeBeat.Game.Ui
 {
     public partial class MenuPlayer : CompositeDrawable
     {

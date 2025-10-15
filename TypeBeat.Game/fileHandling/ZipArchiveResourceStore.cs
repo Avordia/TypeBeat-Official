@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using osu.Framework.IO.Stores;
 
-namespace TypeBeat.Game.fileHandling
+namespace TypeBeat.Game.Filehandling
 {
     public class ZipArchiveResourceStore : IResourceStore<byte[]>, IDisposable
     {

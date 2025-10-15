@@ -20,8 +20,8 @@ using osu.Framework.Logging;
 using osuTK; 
 using osuTK.Graphics;
 using TypeBeat.Game.Beatmaps;
-using TypeBeat.Game.fileHandling;
-using TypeBeat.Game.ui;
+using TypeBeat.Game.Filehandling;
+using TypeBeat.Game.Ui;
 
 namespace TypeBeat.Game
 {
@@ -437,10 +437,9 @@ namespace TypeBeat.Game
                     menuButtons.FadeTo(1, 0);
 
                 const float button_entry_offset = 600f; 
-                const double button_stagger = 50;      // Reduced stagger time for snappier exit
+                const double button_stagger = 50;    
                 const double button_anim_duration = 500; 
-                const double button_exit_duration = 150; // Significantly reduced exit duration for snappier fade out
-
+                const double button_exit_duration = 250; 
                 int index = 0;
                 foreach (var drawable in menuButtons.Children)
                 {

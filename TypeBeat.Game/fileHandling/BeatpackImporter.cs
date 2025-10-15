@@ -1,7 +1,7 @@
 using System.IO;
 using osu.Framework.Platform;
 
-namespace TypeBeat.Game.fileHandling
+namespace TypeBeat.Game.Filehandling
 {
     // The class is now correctly named BeatpackImporter
     public static class BeatpackImporter

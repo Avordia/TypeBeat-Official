@@ -3,7 +3,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osuTK;
 
-namespace TypeBeat.Game.ui
+namespace TypeBeat.Game.Ui
 {
     public partial class Header : Container
     {

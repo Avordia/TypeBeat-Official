@@ -5,33 +5,59 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Rendering;
+using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
 using osuTK;
 using TypeBeat.Game.Beatmaps;
 
-namespace TypeBeat.Game.ui
+namespace TypeBeat.Game.Ui
 {
     public partial class SongThumbnail : ClickableContainer
     {
         private readonly Container content;
+        private readonly Container borderContainer;
         private readonly Sprite thumbnail;
         private readonly Beatpack beatpack;
         
         // Event that fires when this thumbnail is selected
         public event Action<Beatpack> OnSelected;
 
+        private bool isSelected;
+        public bool IsSelected
+        {
+            get => isSelected;
+            set
+            {
+                isSelected = value;
+                updateSelectionState();
+            }
+        }
+
         public SongThumbnail(Beatpack beatpack, TextureStore textures)
         {
             this.beatpack = beatpack;
             
             Size = new Vector2(100);
-            Masking = true;
-            CornerRadius = 10;
 
             Children = new Drawable[]
             {
+                borderContainer = new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Masking = true,
+                    CornerRadius = 10,
+                    BorderThickness = 20,
+                    BorderColour = Colour4.White,
+                    Alpha = 0,
+                    Child = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Alpha = 0,
+                        AlwaysPresent = true
+                    }
+                },
                 content = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
@@ -52,6 +78,14 @@ namespace TypeBeat.Game.ui
             {
                 loadBackgroundAsync(textures);
             }
+        }
+
+        private void updateSelectionState()
+        {
+            if (isSelected)
+                borderContainer.FadeIn(200, Easing.OutQuint);
+            else
+                borderContainer.FadeOut(200, Easing.OutQuint);
         }
 
         private void loadBackgroundAsync(TextureStore textures)
