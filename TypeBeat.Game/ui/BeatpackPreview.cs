@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using osu.Framework.Allocation;
+using osu.Framework.Audio.Track;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Rendering;
@@ -20,6 +21,7 @@ namespace TypeBeat.Game.Ui
         private readonly SpriteText artistText;
         private readonly SpriteText difficultyText;
         private readonly SpriteText starRatingText;
+        private readonly BeatReactiveContainer titleArtistContainer;
         
         [Resolved]
         private IRenderer renderer { get; set; }
@@ -46,43 +48,33 @@ namespace TypeBeat.Game.Ui
                     Anchor = Anchor.TopLeft,
                     Origin = Anchor.TopLeft,
                     AutoSizeAxes = Axes.Both,
-                    Padding = new MarginPadding(20),
-                    Children = new Drawable[]
+                    Padding = new MarginPadding(30), // Extra padding to prevent clipping
+                    Child = titleArtistContainer = new BeatReactiveContainer
                     {
-                        new Container
+                        AutoSizeAxes = Axes.Both,
+                        MaxScalePercentage = 1.12f, // Subtle beat reaction
+                        Child = new FillFlowContainer
                         {
+                            Direction = FillDirection.Vertical,
                             AutoSizeAxes = Axes.Both,
-                            Masking = true,
-                            CornerRadius = 10,
+                            Spacing = new Vector2(0, 5),
                             Children = new Drawable[]
                             {
-                                new Box
+                                titleText = new SpriteText
                                 {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Colour = Colour4.Black,
-                                    Alpha = 0.5f
+                                    Font = new FontUsage("Kodchasan", size: 40, weight: "Bold"),
+                                    Colour = Colour4.White,
+                                    Shadow = true,
+                                    ShadowColour = Colour4.Black,
+                                    Alpha = 0
                                 },
-                                new FillFlowContainer
+                                artistText = new SpriteText
                                 {
-                                    Direction = FillDirection.Vertical,
-                                    AutoSizeAxes = Axes.Both,
-                                    Spacing = new Vector2(0, 5),
-                                    Padding = new MarginPadding(10),
-                                    Children = new Drawable[]
-                                    {
-                                        titleText = new SpriteText
-                                        {
-                                            Font = new FontUsage("Kodchasan", size: 40, weight: "Bold"),
-                                            Colour = Colour4.White,
-                                            Alpha = 0
-                                        },
-                                        artistText = new SpriteText
-                                        {
-                                            Font = new FontUsage("Kodchasan", size: 28),
-                                            Colour = Colour4.White.Opacity(0.9f),
-                                            Alpha = 0
-                                        }
-                                    }
+                                    Font = new FontUsage("Kodchasan", size: 28),
+                                    Colour = Colour4.White.Opacity(0.9f),
+                                    Shadow = true,
+                                    ShadowColour = Colour4.Black,
+                                    Alpha = 0
                                 }
                             }
                         }
@@ -94,44 +86,29 @@ namespace TypeBeat.Game.Ui
                     Anchor = Anchor.BottomLeft,
                     Origin = Anchor.BottomLeft,
                     AutoSizeAxes = Axes.Both,
-                    Padding = new MarginPadding(20),
-                    Children = new Drawable[]
+                    Padding = new MarginPadding(30), // Extra padding to prevent clipping
+                    Child = new FillFlowContainer
                     {
-                        new Container
+                        Direction = FillDirection.Vertical,
+                        AutoSizeAxes = Axes.Both,
+                        Spacing = new Vector2(0, 5),
+                        Children = new Drawable[]
                         {
-                            AutoSizeAxes = Axes.Both,
-                            Masking = true,
-                            CornerRadius = 10,
-                            Children = new Drawable[]
+                            difficultyText = new SpriteText
                             {
-                                new Box
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Colour = Colour4.Black,
-                                    Alpha = 0.5f
-                                },
-                                new FillFlowContainer
-                                {
-                                    Direction = FillDirection.Vertical,
-                                    AutoSizeAxes = Axes.Both,
-                                    Spacing = new Vector2(0, 5),
-                                    Padding = new MarginPadding(10),
-                                    Children = new Drawable[]
-                                    {
-                                        difficultyText = new SpriteText
-                                        {
-                                            Font = new FontUsage("Kodchasan", size: 32, weight: "Bold"),
-                                            Colour = Colour4.White,
-                                            Alpha = 0
-                                        },
-                                        starRatingText = new SpriteText
-                                        {
-                                            Font = new FontUsage("Kodchasan", size: 24),
-                                            Colour = Colour4.Yellow,
-                                            Alpha = 0
-                                        }
-                                    }
-                                }
+                                Font = new FontUsage("Kodchasan", size: 32, weight: "Bold"),
+                                Colour = Colour4.White,
+                                Shadow = true,
+                                ShadowColour = Colour4.Black,
+                                Alpha = 0
+                            },
+                            starRatingText = new SpriteText
+                            {
+                                Font = new FontUsage("Kodchasan", size: 24),
+                                Colour = Colour4.Yellow,
+                                Shadow = true,
+                                ShadowColour = Colour4.Black,
+                                Alpha = 0
                             }
                         }
                     }
@@ -207,6 +184,14 @@ namespace TypeBeat.Game.Ui
                     // Silently fail if texture can't be loaded
                 }
             });
+        }
+
+        /// <summary>
+        /// Set the audio track for beat reaction
+        /// </summary>
+        public void SetTrack(ITrack track)
+        {
+            titleArtistContainer.SetTrack(track);
         }
     }
 }

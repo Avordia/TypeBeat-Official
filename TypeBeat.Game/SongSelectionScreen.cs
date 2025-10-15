@@ -1,5 +1,6 @@
 using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Audio.Track;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -20,6 +21,7 @@ namespace TypeBeat.Game
         private readonly BeatpackManager beatpackManager;
         private readonly Container backgroundContainer;
         private readonly MainScreen mainScreen;
+        private readonly Track track;
         private readonly Header header;
         private readonly Footer footer;
         private readonly Container backgroundLayer;
@@ -28,11 +30,12 @@ namespace TypeBeat.Game
         private SongThumbnail selectedThumbnail;
         private DifficultyButton selectedDifficultyButton;
 
-        public SongSelectionScreen(BeatpackManager beatpackManager, Container backgroundContainer, MainScreen mainScreen)
+        public SongSelectionScreen(BeatpackManager beatpackManager, Container backgroundContainer, MainScreen mainScreen, Track track)
         {
             this.beatpackManager = beatpackManager;
             this.backgroundContainer = backgroundContainer;
             this.mainScreen = mainScreen;
+            this.track = track;
 
             InternalChildren = new Drawable[]
             {
@@ -315,6 +318,12 @@ namespace TypeBeat.Game
         [BackgroundDependencyLoader]
         private void load(TextureStore textures)
         {
+            // Set the track for beat reaction
+            if (track != null)
+            {
+                beatpackPreview.SetTrack(track);
+            }
+
             var songListContainer = InternalChildren.OfType<Container>()
                                     .FirstOrDefault(x => x.Name == "Song List Container");
 

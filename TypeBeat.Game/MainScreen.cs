@@ -96,7 +96,7 @@ namespace TypeBeat.Game
                                 this.Delay(400).Schedule(() =>
                                 {
                                     RemoveInternal(backgroundContainer, false);
-                                    var songSelection = new SongSelectionScreen(beatpackManager, backgroundContainer, this);
+                                    var songSelection = new SongSelectionScreen(beatpackManager, backgroundContainer, this, track);
                                     this.Push(songSelection);
                                 });
                             })
