@@ -55,7 +55,7 @@ namespace TypeBeat.Game
                     Origin = Anchor.Centre,
                     RelativeSizeAxes = Axes.Both,
                     Height = 0.8f,
-                    Width = 0.8f, // Increased center width (70%)
+                    Width = 0.62f, // Reduced to give space for right container
                 },
                 // SONG LIST CONTAINER
                 new Container
@@ -112,14 +112,14 @@ namespace TypeBeat.Game
                     X = -60,
                     Children = new Drawable[]
                     {
-                        // Top section: Difficulty List (5/7 of height)
+                        // Top section: Difficulty List (7/8 of height)
                         new Container
                         {
                             Name = "Difficulty Section",
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
                             RelativeSizeAxes = Axes.Both,
-                            Height = 5f / 7f, // 5/7 of the height
+                            Height = 7f / 8f, // 7/8 of the height
                             Masking = true,
                             CornerRadius = 20,
                             Children = new Drawable[]
@@ -151,14 +151,14 @@ namespace TypeBeat.Game
                                 }
                             }
                         },
-                        // Bottom section: Play Button (2/7 of height)
+                        // Bottom section: Play Button (1/8 of height)
                         new Container
                         {
                             Name = "Play Button Section",
                             Anchor = Anchor.BottomCentre,
                             Origin = Anchor.BottomCentre,
                             RelativeSizeAxes = Axes.Both,
-                            Height = 2f / 7f, // 2/7 of the height
+                            Height = 1f / 8f, // 1/8 of the height
                             Masking = true,
                             CornerRadius = 20,
                             Children = new Drawable[]
@@ -173,12 +173,13 @@ namespace TypeBeat.Game
                                 {
                                     RelativeSizeAxes = Axes.Both,
                                     Padding = new MarginPadding(10),
-                                    Child = new Container
+                                    Child = new ClickableContainer
                                     {
                                         Name = "Play Button Container",
                                         RelativeSizeAxes = Axes.Both,
                                         Masking = true,
                                         CornerRadius = 15,
+                                        Action = () => startGame(),
                                         Children = new Drawable[]
                                         {
                                             new Box
@@ -222,13 +223,16 @@ namespace TypeBeat.Game
             header.Alpha = 0;
             footer.Alpha = 0;
             var songList = InternalChildren.FirstOrDefault(c => c.Name == "Song List Container");
+            var infoContainer = InternalChildren.FirstOrDefault(c => c.Name == "Info Container");
             if (songList != null) songList.Alpha = 0;
+            if (infoContainer != null) infoContainer.Alpha = 0;
 
             using (BeginDelayedSequence(100))
             {
                 header.FadeIn(350, Easing.OutQuint);
                 footer.FadeIn(350, Easing.OutQuint);
                 songList?.FadeIn(350, Easing.OutQuint);
+                infoContainer?.FadeIn(350, Easing.OutQuint);
             }
 
             dumpChildrenOrder("OnEntering after addBackground");
@@ -386,23 +390,52 @@ namespace TypeBeat.Game
 
         private void updateDifficultyList(Beatpack beatpack)
         {
+            Logger.Log($"[updateDifficultyList] Starting update for beatpack: {beatpack?.Beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
+            
             var infoContainer = InternalChildren.OfType<Container>()
                                 .FirstOrDefault(x => x.Name == "Info Container");
             
-            var difficultyListContainer = infoContainer?.Children.OfType<Container>().FirstOrDefault()
-                                ?.Children.OfType<BasicScrollContainer>().FirstOrDefault();
+            Logger.Log($"[updateDifficultyList] Info Container found: {infoContainer != null}", LoggingTarget.Runtime, LogLevel.Important);
             
-            if (difficultyListContainer == null)
+            // Navigate to the Difficulty Section, then to its scroll container
+            var difficultySection = infoContainer?.Children.OfType<Container>()
+                                .FirstOrDefault(x => x.Name == "Difficulty Section");
+            
+            Logger.Log($"[updateDifficultyList] Difficulty Section found: {difficultySection != null}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            if (difficultySection != null)
+            {
+                Logger.Log($"[updateDifficultyList] Difficulty Section has {difficultySection.Children.Count()} children", LoggingTarget.Runtime, LogLevel.Important);
+                foreach (var child in difficultySection.Children)
+                {
+                    Logger.Log($"[updateDifficultyList]   Child: {child.GetType().Name}, Name={child.Name}", LoggingTarget.Runtime, LogLevel.Important);
+                }
+            }
+            
+            var paddingContainer = difficultySection?.Children.OfType<Container>().FirstOrDefault();
+            Logger.Log($"[updateDifficultyList] Padding Container found: {paddingContainer != null}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            var scrollContainer = paddingContainer?.Children.OfType<BasicScrollContainer>().FirstOrDefault();
+            Logger.Log($"[updateDifficultyList] Scroll Container found: {scrollContainer != null}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            if (scrollContainer == null)
+            {
+                Logger.Log("Could not find scroll container - difficulty list cannot be updated", LoggingTarget.Runtime, LogLevel.Error);
                 return;
+            }
 
-            var difficultyList = (FillFlowContainer)difficultyListContainer.Child;
+            var difficultyList = (FillFlowContainer)scrollContainer.Child;
+            Logger.Log($"[updateDifficultyList] Difficulty List found, clearing {difficultyList.Children.Count()} existing items", LoggingTarget.Runtime, LogLevel.Important);
+            
             difficultyList.Clear();
 
             if (selectedDifficultyButton != null)
                 selectedDifficultyButton.IsSelected = false;
 
-            if (beatpack.Beatmap != null)
+            if (beatpack?.Beatmap != null)
             {
+                Logger.Log($"[updateDifficultyList] Creating difficulty button for: {beatpack.Beatmap.DifficultyName}", LoggingTarget.Runtime, LogLevel.Important);
+                
                 var diffButton = new DifficultyButton(beatpack.Beatmap);
                 diffButton.OnSelected += (beatmap) =>
                 {
@@ -419,12 +452,32 @@ namespace TypeBeat.Game
                 
                 selectedDifficultyButton = diffButton;
                 selectedDifficultyButton.IsSelected = true;
+                
+                Logger.Log($"[updateDifficultyList] ✓ Successfully added difficulty button. List now has {difficultyList.Children.Count()} items", LoggingTarget.Runtime, LogLevel.Important);
+            }
+            else
+            {
+                Logger.Log("[updateDifficultyList] Beatpack or Beatmap is null!", LoggingTarget.Runtime, LogLevel.Error);
             }
         }
 
         private void handleDifficultySelected(Beatmap selectedBeatmap)
         {
             Logger.Log($"Selected difficulty: {selectedBeatmap.DifficultyName} (★{selectedBeatmap.StarRating})", LoggingTarget.Runtime, LogLevel.Important);
+        }
+
+        private void startGame()
+        {
+            if (beatpackManager.CurrentBeatpack.Value == null || beatpackManager.CurrentBeatpack.Value.Beatmap == null)
+            {
+                Logger.Log("Cannot start game: No beatpack or beatmap selected", LoggingTarget.Runtime, LogLevel.Error);
+                return;
+            }
+
+            Logger.Log($"Starting game with beatpack: {beatpackManager.CurrentBeatpack.Value.Beatmap.Title}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            var gameScreen = new GameScreen(beatpackManager.CurrentBeatpack.Value, beatpackManager.CurrentBeatpack.Value.Beatmap);
+            this.Push(gameScreen);
         }
 
         protected override void Dispose(bool isDisposing)
