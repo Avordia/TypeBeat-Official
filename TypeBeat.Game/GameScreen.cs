@@ -57,7 +57,10 @@ namespace TypeBeat.Game
     private Beatmaps.WordSegment[] segmentsArr = System.Array.Empty<Beatmaps.WordSegment>();
 
     private Container pauseOverlay;
+    private Container countdownOverlay;
+    private SpriteText countdownText;
     private bool isPaused = false;
+    private bool isCountingDown = false;
     private double gameplayStartClockMs = 0;
     private Track gameTrack;
 
@@ -203,6 +206,10 @@ namespace TypeBeat.Game
             // Pause overlay (hidden by default)
             AddInternal(pauseOverlay = createPauseOverlay());
             pauseOverlay.Alpha = 0;
+            
+            // Countdown overlay (hidden by default)
+            AddInternal(countdownOverlay = createCountdownOverlay());
+            countdownOverlay.Alpha = 0;
         }
 
         [BackgroundDependencyLoader]
@@ -371,7 +378,7 @@ namespace TypeBeat.Game
         {
             base.Update();
 
-            if (isPaused) return;
+            if (isPaused || isCountingDown) return;
 
             // Auto-miss overdue notes (beyond late window) without key presses
             double nowRel = Clock.CurrentTime - gameplayStartClockMs;
@@ -415,17 +422,28 @@ namespace TypeBeat.Game
         {
             if (e.Key == Key.Escape)
             {
-                // Toggle pause overlay
+                // Don't allow pausing during countdown
+                if (isCountingDown)
+                    return true;
+                    
+                // Toggle pause
                 isPaused = !isPaused;
                 if (isPaused)
+                {
                     pauseOverlay.FadeIn(150);
+                    gameTrack?.Stop(); // Pause the music
+                    Logger.Log("[GameScreen] Game paused, track stopped", LoggingTarget.Runtime, LogLevel.Important);
+                }
                 else
+                {
                     pauseOverlay.FadeOut(150);
+                    startCountdown(); // Start countdown before resuming
+                }
                 return true;
             }
 
-            // Ignore inputs while paused
-            if (isPaused)
+            // Ignore inputs while paused or counting down
+            if (isPaused || isCountingDown)
                 return true;
 
             // Accept only A-Z and Space
@@ -504,7 +522,10 @@ namespace TypeBeat.Game
                             new SpriteText { Text = "Paused", Font = new FontUsage("Kodchasan", size: 36, weight: "Bold"), Colour = Colour4.White },
                             new ClickableContainer
                             {
-                                Action = () => pauseOverlay.FadeOut(150),
+                                Action = () => {
+                                    pauseOverlay.FadeOut(150);
+                                    startCountdown();
+                                },
                                 AutoSizeAxes = Axes.Both,
                                 Child = new SpriteText { Text = "Resume", Font = new FontUsage("Kodchasan", size: 28, weight: "Bold"), Colour = Colour4.White }
                             },
@@ -520,6 +541,68 @@ namespace TypeBeat.Game
             };
 
             return overlay;
+        }
+
+        private Container createCountdownOverlay()
+        {
+            var overlay = new Container
+            {
+                RelativeSizeAxes = Axes.Both,
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Alpha = 0.0f,
+                Children = new Drawable[]
+                {
+                    new Box { RelativeSizeAxes = Axes.Both, Colour = Colour4.Black, Alpha = 0.3f },
+                    countdownText = new SpriteText
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Font = new FontUsage("Kodchasan", size: 120, weight: "Bold"),
+                        Colour = Colour4.White,
+                        Shadow = true,
+                        ShadowColour = Colour4.Black,
+                        Text = "3"
+                    }
+                }
+            };
+
+            return overlay;
+        }
+
+        private void startCountdown()
+        {
+            isCountingDown = true;
+            isPaused = false;
+            
+            countdownOverlay.FadeIn(150);
+            
+            // 3
+            countdownText.Text = "3";
+            countdownText.ScaleTo(1.5f, 0).Then().ScaleTo(1.0f, 800, Easing.OutElastic);
+            
+            // 2
+            this.Delay(1000).Schedule(() =>
+            {
+                countdownText.Text = "2";
+                countdownText.ScaleTo(1.5f, 0).Then().ScaleTo(1.0f, 800, Easing.OutElastic);
+            });
+            
+            // 1
+            this.Delay(2000).Schedule(() =>
+            {
+                countdownText.Text = "1";
+                countdownText.ScaleTo(1.5f, 0).Then().ScaleTo(1.0f, 800, Easing.OutElastic);
+                
+                // Resume game after "1"
+                this.Delay(1000).Schedule(() =>
+                {
+                    countdownOverlay.FadeOut(300);
+                    isCountingDown = false;
+                    gameTrack?.Start(); // Resume the music
+                    Logger.Log("[GameScreen] Countdown finished, game resumed", LoggingTarget.Runtime, LogLevel.Important);
+                });
+            });
         }
     }
 }

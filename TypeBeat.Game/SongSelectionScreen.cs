@@ -244,15 +244,10 @@ namespace TypeBeat.Game
             base.OnResuming(e);
             
             Logger.Log("[SongSelection] Resuming from GameScreen", LoggingTarget.Runtime, LogLevel.Important);
-            
-            // Get the current track from MainScreen (in case beatpack changed during gameplay)
             var currentTrack = mainScreen.GetCurrentTrack();
-            
-            // If track is not playing (because it was stopped when going to LoadingScreen),
-            // restart it from the beginning
             if (currentTrack != null && !currentTrack.IsRunning)
             {
-                currentTrack.Restart(); // This stops and starts from position 0
+                currentTrack.Restart(); 
                 Logger.Log($"[SongSelection] Current track was not running, restarted from beginning", LoggingTarget.Runtime, LogLevel.Important);
             }
             else if (currentTrack != null)
