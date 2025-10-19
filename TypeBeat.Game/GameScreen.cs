@@ -768,6 +768,7 @@ namespace TypeBeat.Game
             UpdateHealth(res.Judgement);
             ShowJudgementGlow(res.Judgement);
             centralWord.ConsumeNext();
+            centralWord.PlayBounceEffect(); // Subtle bounce on key press
 
             if (res.SegmentCompleted)
             {

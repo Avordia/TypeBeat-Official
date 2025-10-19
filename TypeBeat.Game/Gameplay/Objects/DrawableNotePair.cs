@@ -51,7 +51,7 @@ namespace TypeBeat.Game.Gameplay.Objects
             Origin = Anchor.TopLeft;
 
             // Create two sprite cues that will use the LeftToRightNote.png texture
-            const float note_scale = 0.8f; // Smaller size for cleaner look
+            const float note_scale = 1.5f; // Larger size for better visibility
             InternalChildren = new Drawable[]
             {
                 leftLine = new Sprite 

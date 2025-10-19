@@ -1,10 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osuTK;
 using TypeBeat.Game.Gameplay.Typing;
-using System.Linq;
 
 namespace TypeBeat.Game.Ui
 {
@@ -29,11 +30,11 @@ namespace TypeBeat.Game.Ui
             // Keep a consistent bar height even if text is empty (e.g., when '/' is hidden)
             AutoSizeAxes = Axes.None;
             RelativeSizeAxes = Axes.X;
-            Width = 0.35f;
-            Height = 64; // fixed height for visibility
+            Width = 0.45f; // Bigger container (was 0.35f)
+            Height = 80; // Taller height (was 64)
 
             Masking = true;
-            CornerRadius = 32; // More rounded corners to match Figma design
+            CornerRadius = 40; // Adjusted for new size
 
             InternalChildren = new Drawable[]
             {
@@ -44,7 +45,7 @@ namespace TypeBeat.Game.Ui
                     Colour = Colour4.FromHex("#E63946"), // Red color from Figma
                     Alpha = 1.0f
                 },
-                // Animated trapezoid container (masked by parent)
+                // Animated trapezoid container (masked by parent) - Hazard pattern
                 trapezoidContainer = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
@@ -52,22 +53,39 @@ namespace TypeBeat.Game.Ui
                     {
                         Anchor = Anchor.CentreLeft,
                         Origin = Anchor.CentreLeft,
-                        Size = new Vector2(150, 64), // Trapezoid size
-                        X = -200, // Start off-screen to the left
-                        Shear = new Vector2(0.3f, 0), // Creates trapezoid shape
-                        Child = new Box
+                        RelativeSizeAxes = Axes.Y,
+                        Width = 2000, // Wide enough to hold multiple trapezoids
+                        X = -1000, // Start off-screen to the left
+                        Child = new FillFlowContainer
                         {
-                            RelativeSizeAxes = Axes.Both,
-                            Colour = Colour4.White,
-                            Alpha = 0.1f // 10% opacity
+                            Direction = FillDirection.Horizontal,
+                            RelativeSizeAxes = Axes.Y,
+                            AutoSizeAxes = Axes.X,
+                            Spacing = new Vector2(10, 0), // Gap between trapezoids
+                            Children = createHazardPattern()
                         }
+                    }
+                },
+                // White border (bolder)
+                new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Masking = true,
+                    CornerRadius = 40,
+                    BorderThickness = 6, // Bolder border (was 3)
+                    BorderColour = Colour4.White,
+                    Child = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Alpha = 0,
+                        AlwaysPresent = true
                     }
                 },
                 wordText = new SpriteText
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Font = new FontUsage("Kodchasan", size: 40, weight: "Bold"),
+                    Font = new FontUsage("Kodchasan", size: 52, weight: "Bold"), // Bigger text (was 40)
                     Colour = Colour4.White,
                     Spacing = new Vector2(0.1f, 0) // 10% spacing
                 }
@@ -80,14 +98,47 @@ namespace TypeBeat.Game.Ui
             startTrapezoidAnimation();
         }
 
+        private Drawable[] createHazardPattern()
+        {
+            // Create multiple trapezoids for hazard stripe pattern
+            var trapezoids = new List<Drawable>();
+            const int trapezoidCount = 20; // Enough to fill the width multiple times
+            const float trapezoidWidth = 60f;
+            
+            for (int i = 0; i < trapezoidCount; i++)
+            {
+                trapezoids.Add(new Container
+                {
+                    Size = new Vector2(trapezoidWidth, 80), // Match new height
+                    Shear = new Vector2(0.4f, 0), // Creates trapezoid/stripe shape
+                    Child = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = Colour4.White,
+                        Alpha = 0.1f // 10% opacity
+                    }
+                });
+            }
+            
+            return trapezoids.ToArray();
+        }
+
         private void startTrapezoidAnimation()
         {
-            // Animate trapezoid moving from left to right continuously
+            // Animate hazard pattern moving from left to right continuously (slower)
             trapezoidShape.Loop(d => d
-                .MoveTo(new Vector2(-200, 0), 0) // Start position (off-screen left)
+                .MoveTo(new Vector2(-1000, 0), 0) // Start position (off-screen left)
                 .Then()
-                .MoveTo(new Vector2(DrawWidth + 200, 0), 3000, Easing.InOutSine) // Move to right (off-screen)
+                .MoveTo(new Vector2(0, 0), 12000, Easing.InOutSine) // Slower movement (was 4000ms, now 8000ms)
             );
+        }
+
+        public void PlayBounceEffect()
+        {
+            // Subtle bounce effect on key press
+            this.ScaleTo(1.05f, 100, Easing.OutQuint) // Scale up slightly
+                .Then()
+                .ScaleTo(1.0f, 300, Easing.OutElastic); // Bounce back with elastic easing
         }
 
         public void SetWord(string wordUppercase)
