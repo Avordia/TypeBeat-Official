@@ -30,7 +30,13 @@ namespace TypeBeat.Game
             Resources.AddStore(new DllResourceStore(typeof(TypeBeatResources).Assembly));
             dependencies.CacheAs(new TextureStore(Host.Renderer, new TextureLoaderStore(Resources)));
             Resources.AddStore(new DllResourceStore(TypeBeatResources.ResourceAssembly));
+            
+            // Add all font families
+            // Kodchasan regular and bold variants
             AddFont(Resources, "Fonts/Kodchasan");
+            AddFont(Resources, "Fonts/Kodchasan-Bold");
+            // Inter font
+            AddFont(Resources, "Fonts/Inter");
         }
     }
 }

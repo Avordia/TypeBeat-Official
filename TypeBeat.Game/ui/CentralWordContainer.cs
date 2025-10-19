@@ -15,6 +15,8 @@ namespace TypeBeat.Game.Ui
     public partial class CentralWordContainer : Container
     {
         private readonly Box background;
+        private readonly Container trapezoidContainer;
+        private readonly Container trapezoidShape;
         private readonly SpriteText wordText;
 
         private string fullWord = string.Empty;
@@ -31,15 +33,35 @@ namespace TypeBeat.Game.Ui
             Height = 64; // fixed height for visibility
 
             Masking = true;
-            CornerRadius = 20;
+            CornerRadius = 32; // More rounded corners to match Figma design
 
             InternalChildren = new Drawable[]
             {
+                // Red gradient background
                 background = new Box
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Colour = Colour4.Black,
-                    Alpha = 0.6f
+                    Colour = Colour4.FromHex("#E63946"), // Red color from Figma
+                    Alpha = 1.0f
+                },
+                // Animated trapezoid container (masked by parent)
+                trapezoidContainer = new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Child = trapezoidShape = new Container
+                    {
+                        Anchor = Anchor.CentreLeft,
+                        Origin = Anchor.CentreLeft,
+                        Size = new Vector2(150, 64), // Trapezoid size
+                        X = -200, // Start off-screen to the left
+                        Shear = new Vector2(0.3f, 0), // Creates trapezoid shape
+                        Child = new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Colour = Colour4.White,
+                            Alpha = 0.1f // 10% opacity
+                        }
+                    }
                 },
                 wordText = new SpriteText
                 {
@@ -47,8 +69,25 @@ namespace TypeBeat.Game.Ui
                     Origin = Anchor.Centre,
                     Font = new FontUsage("Kodchasan", size: 40, weight: "Bold"),
                     Colour = Colour4.White,
+                    Spacing = new Vector2(0.1f, 0) // 10% spacing
                 }
             };
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+            startTrapezoidAnimation();
+        }
+
+        private void startTrapezoidAnimation()
+        {
+            // Animate trapezoid moving from left to right continuously
+            trapezoidShape.Loop(d => d
+                .MoveTo(new Vector2(-200, 0), 0) // Start position (off-screen left)
+                .Then()
+                .MoveTo(new Vector2(DrawWidth + 200, 0), 3000, Easing.InOutSine) // Move to right (off-screen)
+            );
         }
 
         public void SetWord(string wordUppercase)
@@ -115,7 +154,7 @@ namespace TypeBeat.Game.Ui
             if (onlySpace || isOnlySpaceWord)
                 background.Colour = Colour4.Gold;
             else
-                background.Colour = Colour4.Black;
+                background.Colour = Colour4.FromHex("#E63946"); // Red color from Figma
         }
     }
 }

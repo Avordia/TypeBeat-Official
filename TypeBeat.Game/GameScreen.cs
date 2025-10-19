@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -33,18 +34,26 @@ namespace TypeBeat.Game
         private readonly Beatpack beatpack;
         private readonly Beatmap beatmap;
         private readonly Sprite backgroundSprite;
-    private readonly SpriteText accuracyText;
-    private readonly SpriteText comboText;
+        private readonly SpriteText scoreText;
+        private readonly SpriteText accuracyText;
+        private readonly SpriteText comboText;
+        private readonly Sprite judgementGlow;
+        private readonly Sprite healthBarLogo;
+        private readonly Container healthBarContainer;
+        private readonly List<Box> healthBarSegments = new List<Box>();
+        private const int healthSegmentCount = 15; // Number of parallelogram segments
         private float currentAccuracy = 100.0f;
+        private int currentScore = 0;
+        private double currentHealth = 1.0; // Health from 0.0 to 1.0 (100%)
+        private const double max_health = 1.0;
+        private const double health_drain_rate = 0.02; // Health drain per second
+        private double lastHealthDrainTime = 0;
         private readonly Ui.CentralWordContainer centralWord;
         private readonly Ui.WordPreviews wordPreviews;
         private readonly Container playfield;
         private readonly LayoutConfig layoutConfig = new LayoutConfig
         {
-            HalfGapXFraction = 0.12f // Increase this to make lines stop FURTHER APART
-            // Default is 0.06 (6% of screen width)
-            // 0.12 = 12% (twice as wide)
-            // 0.20 = 20% (much wider)
+            HalfGapXFraction = 0.115f
         };
         private readonly NoteAppearanceConfig appearanceConfig = new NoteAppearanceConfig();
         private readonly NoteScheduler noteScheduler;
@@ -62,6 +71,7 @@ namespace TypeBeat.Game
     private bool isPaused = false;
     private bool isCountingDown = false;
     private double gameplayStartClockMs = 0;
+    private double pauseTime = 0;
     private Track gameTrack;
 
         [Resolved]
@@ -69,6 +79,9 @@ namespace TypeBeat.Game
 
         [Resolved]
         private AudioManager audioManager { get; set; }
+
+        [Resolved]
+        private TextureStore textures { get; set; }
 
         public GameScreen(Beatpack beatpack, Beatmap beatmap)
         {
@@ -97,9 +110,72 @@ namespace TypeBeat.Game
                     {
                         Font = new FontUsage("Kodchasan", size: 16, weight: "Bold"),
                         Colour = Colour4.Yellow,
-                        Shadow = true,
-                        ShadowColour = Colour4.Black,
                         Text = "debug..."
+                    }
+                },
+                // Health bar with t6 logo and parallelogram segments (Figma design)
+                healthBarContainer = new Container
+                {
+                    Anchor = Anchor.TopLeft,
+                    Origin = Anchor.TopLeft,
+                    Position = new Vector2(90, 20), // Moved right so logo is visible
+                    AutoSizeAxes = Axes.Both,
+                    Children = new Drawable[]
+                    {
+                        new FillFlowContainer
+                        {
+                            Direction = FillDirection.Horizontal, // Changed to horizontal for same Y axis
+                            AutoSizeAxes = Axes.Both,
+                            Spacing = new Vector2(10, 0), // Space between logo and health bar
+                            Children = new Drawable[]
+                            {
+                                // t6 logo (maintain aspect ratio)
+                                new Container
+                                {
+                                    Size = new Vector2(50, 50), // Larger logo size
+                                    Anchor = Anchor.CentreLeft,
+                                    Origin = Anchor.CentreLeft,
+                                    Y = 5, // Move down slightly
+                                    Child = healthBarLogo = new Sprite
+                                    {
+                                        Anchor = Anchor.Centre,
+                                        Origin = Anchor.Centre,
+                                        RelativeSizeAxes = Axes.Both,
+                                        FillMode = FillMode.Fit, // Maintain aspect ratio
+                                        EdgeSmoothness = new Vector2(2.0f) // Anti-aliasing for smooth edges
+                                    }
+                                },
+                                // Parallelogram health bar segments
+                                new Container
+                                {
+                                    Size = new Vector2(300, 20), // Smaller bar
+                                    Anchor = Anchor.CentreLeft,
+                                    Origin = Anchor.CentreLeft,
+                                    Child = new FillFlowContainer
+                                    {
+                                        Direction = FillDirection.Horizontal,
+                                        AutoSizeAxes = Axes.None,
+                                        RelativeSizeAxes = Axes.Both,
+                                        Spacing = new Vector2(3, 0) // Smaller spacing (was 5)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                // Score display at top center
+                new Container
+                {
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.TopCentre,
+                    AutoSizeAxes = Axes.Both,
+                    Padding = new MarginPadding { Top = 30 },
+                    Child = scoreText = new SpriteText
+                    {
+                        Text = "000000000000", // 12 digits
+                        Font = new FontUsage("Kodchasan", size: 48, weight: "Bold"),
+                        Colour = Colour4.White,
+                        Spacing = new Vector2(0.25f, 0) // 25% spacing
                     }
                 },
                 // HitDetector at center
@@ -119,13 +195,24 @@ namespace TypeBeat.Game
                             Origin = Anchor.TopLeft
                         }
                     }
-                },
-                // Center word container (UI layer)
-                centralWord = new Ui.CentralWordContainer
+                },                centralWord = new Ui.CentralWordContainer
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     Y = 0
+                },
+                new Container
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Y = 60,
+                    AutoSizeAxes = Axes.Both,
+                    Child = comboText = new SpriteText
+                    {
+                        Text = "COMBO: X0",
+                        Font = new FontUsage("Inter", size: 24),
+                        Colour = Colour4.White
+                    }
                 },
                 // Word previews stacked above the word container
                 wordPreviews = new Ui.WordPreviews
@@ -134,7 +221,7 @@ namespace TypeBeat.Game
                     Origin = Anchor.Centre,
                     Y = -80
                 },
-                // Top-right UI container
+                // Top-right UI container (accuracy only now)
                 new Container
                 {
                     Anchor = Anchor.TopRight,
@@ -157,49 +244,29 @@ namespace TypeBeat.Game
                                 {
                                     new SpriteText
                                     {
-                                        Text = "Combo:",
-                                        Font = new FontUsage("Kodchasan", size: 24, weight: "Bold"),
-                                        Colour = Colour4.White,
-                                        Shadow = true,
-                                        ShadowColour = Colour4.Black
-                                    },
-                                    comboText = new SpriteText
-                                    {
-                                        Text = "0",
-                                        Font = new FontUsage("Kodchasan", size: 24, weight: "Bold"),
-                                        Colour = Colour4.White,
-                                        Shadow = true,
-                                        ShadowColour = Colour4.Black
-                                    }
-                                }
-                            },
-                            new FillFlowContainer
-                            {
-                                Direction = FillDirection.Horizontal,
-                                AutoSizeAxes = Axes.Both,
-                                Spacing = new Vector2(10, 0),
-                                Children = new Drawable[]
-                                {
-                                    new SpriteText
-                                    {
-                                        Text = "Accuracy:",
+                                        Text = "ACCURACY:", // All caps
                                         Font = new FontUsage("Kodchasan", size: 28, weight: "Bold"),
-                                        Colour = Colour4.White,
-                                        Shadow = true,
-                                        ShadowColour = Colour4.Black
+                                        Colour = Colour4.White
                                     },
                                     accuracyText = new SpriteText
                                     {
                                         Text = "100.0%",
                                         Font = new FontUsage("Kodchasan", size: 28, weight: "Bold"),
-                                        Colour = Colour4.Lime,
-                                        Shadow = true,
-                                        ShadowColour = Colour4.Black
+                                        Colour = Colour4.Lime
                                     }
                                 }
                             }
                         }
                     }
+                },
+                judgementGlow = new Sprite
+                {
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.Centre,
+                    Y = -100, 
+                    Size = new Vector2(1200, 200), 
+                    Alpha = 0,
+                    Depth = -1000 
                 }
             };
 
@@ -215,6 +282,67 @@ namespace TypeBeat.Game
         [BackgroundDependencyLoader]
         private void load()
         {
+            // Load t6 logo for health bar
+            healthBarLogo.Texture = textures.Get("images/logo/Logo");
+            
+            // Create parallelogram health bar segments with gradient colors
+            // Navigate to the segment container: healthBarContainer → FillFlowContainer (horizontal) → Container (second child) → FillFlowContainer
+            var horizontalFlow = healthBarContainer.Children.OfType<FillFlowContainer>().First();
+            var healthBarSegmentsContainer = horizontalFlow.Children.OfType<Container>().Skip(1).First(); // Skip logo container, get health bar container
+            var segmentContainer = healthBarSegmentsContainer.Child as FillFlowContainer;
+            
+            // Define gradient colors from red to purple/blue (Figma design)
+            var gradientColors = new[]
+            {
+                Colour4.FromHex("#FF3333"), // Red
+                Colour4.FromHex("#FF4D33"),
+                Colour4.FromHex("#FF6633"),
+                Colour4.FromHex("#FF8033"), // Orange
+                Colour4.FromHex("#FF9933"),
+                Colour4.FromHex("#FFB333"),
+                Colour4.FromHex("#CC6699"), // Pink
+                Colour4.FromHex("#B366AA"),
+                Colour4.FromHex("#9966BB"), // Magenta/Purple
+                Colour4.FromHex("#8066CC"),
+                Colour4.FromHex("#6666DD"), // Purple
+                Colour4.FromHex("#5555BB"),
+                Colour4.FromHex("#444499"),
+                Colour4.FromHex("#333377"), // Dark purple
+                Colour4.FromHex("#222255")  // Dark blue
+            };
+            
+            float segmentWidth = 18f;      // Smaller width
+            float segmentHeight = 20f;     // Smaller height
+            float skewAmount = 0.3f;       // Creates parallelogram effect
+            
+            for (int i = 0; i < healthSegmentCount; i++)
+            {
+                // Calculate gradient alpha: 100% (left) to 10% (right)
+                float alphaGradient = 1.0f - (i / (float)(healthSegmentCount - 1)) * 0.9f;
+                
+                var segment = new Container
+                {
+                    Size = new Vector2(segmentWidth, segmentHeight),
+                    Anchor = Anchor.CentreLeft,
+                    Origin = Anchor.CentreLeft,
+                    Shear = new Vector2(skewAmount, 0), // Creates parallelogram/chevron shape
+                    Child = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = gradientColors[i],
+                        Alpha = alphaGradient, // Gradient alpha from left to right
+                        EdgeSmoothness = new Vector2(2.0f) // Enhanced anti-aliasing for smoother edges
+                    }
+                };
+                
+                healthBarSegments.Add(segment.Child as Box);
+                segmentContainer.Add(segment);
+            }
+            
+            // Load judgment glow texture
+            judgementGlow.Texture = textures.Get("images/JudgementGlow");
+            Logger.Log($"[GameScreen] Judgement glow texture loaded: {judgementGlow.Texture != null}", LoggingTarget.Runtime, LogLevel.Important);
+            
             // Load game audio from beatpack
             if (!string.IsNullOrEmpty(beatpack.MusicPath))
             {
@@ -337,6 +465,142 @@ namespace TypeBeat.Game
                 accuracyText.Colour = Colour4.Red;
         }
 
+        private void UpdateScore(JudgementType judgement)
+        {
+            // Score calculation: Perfect=300, Great=200, Good=100, Meh=50, Miss=0
+            int scoreGain = judgement switch
+            {
+                JudgementType.Perfect300 => 300,
+                JudgementType.Great200 => 200,
+                JudgementType.Good100 => 100,
+                JudgementType.Meh50 => 50,
+                _ => 0
+            };
+
+            // Add combo multiplier bonus (up to 4x at combo 100+)
+            int comboMultiplier = Math.Min(score.Combo / 25, 4);
+            currentScore += scoreGain * (1 + comboMultiplier);
+            scoreText.Text = currentScore.ToString("D12"); // 12 digits
+        }
+
+        private void UpdateCombo()
+        {
+            comboText.Text = $"COMBO: X{score.Combo}";
+        }
+
+        private void ShowJudgementGlow(JudgementType judgement)
+        {
+            Logger.Log($"[GameScreen] ShowJudgementGlow called with {judgement}, texture={judgementGlow.Texture != null}, alpha={judgementGlow.Alpha}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Set color based on judgment type
+            Colour4 glowColor = judgement switch
+            {
+                JudgementType.Perfect300 => Colour4.FromHex("#FFD700"), // Gold
+                JudgementType.Great200 => Colour4.FromHex("#00FF00"),   // Green
+                JudgementType.Good100 => Colour4.FromHex("#00FFFF"),    // Cyan
+                JudgementType.Meh50 => Colour4.FromHex("#FF8800"),      // Orange
+                _ => Colour4.FromHex("#FF0000")                         // Red for miss
+            };
+
+            judgementGlow.Colour = glowColor;
+            
+            // Flash animation with scale
+            judgementGlow.ScaleTo(0.8f, 0)
+                         .Then()
+                         .ScaleTo(1.2f, 100, Easing.OutQuint)
+                         .Then()
+                         .ScaleTo(1.0f, 200, Easing.InQuint);
+                         
+            judgementGlow.FadeTo(0.9f, 50)
+                         .Then()
+                         .FadeOut(400, Easing.OutQuint);
+        }
+
+        private void UpdateHealth(JudgementType judgement)
+        {
+            // Health gain/loss based on judgement (osu! style)
+            double healthChange = judgement switch
+            {
+                JudgementType.Perfect300 => 0.01,   // +1% health
+                JudgementType.Great200 => 0.005,    // +0.5% health
+                JudgementType.Good100 => 0.002,     // +0.2% health
+                JudgementType.Meh50 => -0.01,       // -1% health
+                JudgementType.Miss => -0.04,        // -4% health (harsh penalty)
+                _ => 0
+            };
+
+            currentHealth = Math.Clamp(currentHealth + healthChange, 0.0, max_health);
+            UpdateHealthBar();
+
+            // Check for fail condition
+            if (currentHealth <= 0)
+            {
+                OnHealthDepleted();
+            }
+        }
+
+        private void UpdateHealthBar()
+        {
+            // Update each segment with smooth gradual fade based on health
+            for (int i = 0; i < healthBarSegments.Count; i++)
+            {
+                // Calculate base gradient alpha: 100% (left) to 10% (right)
+                float baseAlphaGradient = 1.0f - (i / (float)(healthSegmentCount - 1)) * 0.9f;
+                
+                // Calculate segment position in health bar (0.0 to 1.0)
+                float segmentPosition = i / (float)(healthSegmentCount - 1);
+                
+                // Calculate smooth fade based on health percentage
+                // This creates a gradual transition instead of a hard cut-off
+                float healthPercentage = (float)currentHealth;
+                float segmentAlpha;
+                
+                if (segmentPosition < healthPercentage)
+                {
+                    // Segment is fully visible (player has health here)
+                    segmentAlpha = baseAlphaGradient;
+                }
+                else if (segmentPosition < healthPercentage + 0.2f) // 20% fade zone
+                {
+                    // Segment is in the fade zone - gradually become invisible
+                    float fadeProgress = (segmentPosition - healthPercentage) / 0.2f;
+                    segmentAlpha = baseAlphaGradient * (1.0f - fadeProgress);
+                }
+                else
+                {
+                    // Segment is fully invisible (health depleted)
+                    segmentAlpha = 0.0f;
+                }
+                
+                healthBarSegments[i].FadeTo(segmentAlpha, 200, Easing.OutQuint);
+            }
+        }
+
+        private void OnHealthDepleted()
+        {
+            isPaused = true;
+            gameTrack?.Stop();
+            
+            Logger.Log("[GameScreen] Health depleted - Game Over!", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Show game over overlay
+            Schedule(() =>
+            {
+                var gameOverText = new SpriteText
+                {
+                    Text = "FAILED",
+                    Font = new FontUsage("Kodchasan", size: 72, weight: "Bold"),
+                    Colour = Colour4.Red,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Alpha = 0
+                };
+
+                AddInternal(gameOverText);
+                gameOverText.FadeIn(500).Then().Delay(2000).Schedule(() => this.Exit());
+            });
+        }
+
         public override void OnEntering(ScreenTransitionEvent e)
         {
             base.OnEntering(e);
@@ -352,6 +616,7 @@ namespace TypeBeat.Game
             // Capture when gameplay starts to make all timing relative to audio start
             gameplayStartClockMs = Clock.CurrentTime;
             noteScheduler.TimeOffsetMs = gameplayStartClockMs;
+            lastHealthDrainTime = Clock.CurrentTime; // Initialize health drain timer
             Logger.Log($"GameScreen entered with beatmap: {beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
         }
 
@@ -380,6 +645,23 @@ namespace TypeBeat.Game
 
             if (isPaused || isCountingDown) return;
 
+            // Passive health drain over time (osu! style)
+            double now = Clock.CurrentTime;
+            if (lastHealthDrainTime > 0)
+            {
+                double deltaSeconds = (now - lastHealthDrainTime) / 1000.0;
+                currentHealth = Math.Clamp(currentHealth - (health_drain_rate * deltaSeconds), 0.0, max_health);
+                UpdateHealthBar();
+                
+                // Check for fail condition from drain
+                if (currentHealth <= 0)
+                {
+                    OnHealthDepleted();
+                    return;
+                }
+            }
+            lastHealthDrainTime = now;
+
             // Auto-miss overdue notes (beyond late window) without key presses
             double nowRel = Clock.CurrentTime - gameplayStartClockMs;
             if (nowRel < 0) nowRel = 0;
@@ -392,9 +674,11 @@ namespace TypeBeat.Game
                     noteScheduler.HitCurrentNote(); // Make missed notes disappear too
                     score.Apply(JudgementType.Miss);
                     centralWord.ConsumeNext();
+                    ShowJudgementGlow(JudgementType.Miss);
+                    UpdateHealth(JudgementType.Miss);
                 }
                 UpdateAccuracy(score.GetAccuracyPercent());
-                comboText.Text = score.Combo.ToString();
+                UpdateCombo();
             }
 
             if (segCompleted)
@@ -430,9 +714,12 @@ namespace TypeBeat.Game
                 isPaused = !isPaused;
                 if (isPaused)
                 {
+                    // Pause everything
+                    pauseTime = Clock.CurrentTime;
                     pauseOverlay.FadeIn(150);
                     gameTrack?.Stop(); // Pause the music
-                    Logger.Log("[GameScreen] Game paused, track stopped", LoggingTarget.Runtime, LogLevel.Important);
+                    
+                    Logger.Log("[GameScreen] Game paused at " + pauseTime, LoggingTarget.Runtime, LogLevel.Important);
                 }
                 else
                 {
@@ -475,8 +762,11 @@ namespace TypeBeat.Game
             noteScheduler.HitCurrentNote();
             
             score.Apply(res.Judgement);
+            UpdateScore(res.Judgement);
             UpdateAccuracy(score.GetAccuracyPercent());
-            comboText.Text = score.Combo.ToString();
+            UpdateCombo();
+            UpdateHealth(res.Judgement);
+            ShowJudgementGlow(res.Judgement);
             centralWord.ConsumeNext();
 
             if (res.SegmentCompleted)
@@ -560,8 +850,6 @@ namespace TypeBeat.Game
                         Origin = Anchor.Centre,
                         Font = new FontUsage("Kodchasan", size: 120, weight: "Bold"),
                         Colour = Colour4.White,
-                        Shadow = true,
-                        ShadowColour = Colour4.Black,
                         Text = "3"
                     }
                 }
@@ -599,8 +887,14 @@ namespace TypeBeat.Game
                 {
                     countdownOverlay.FadeOut(300);
                     isCountingDown = false;
+                    
+                    // Adjust the gameplay start time to account for pause duration
+                    double pauseDuration = Clock.CurrentTime - pauseTime;
+                    gameplayStartClockMs += pauseDuration;
+                    noteScheduler.TimeOffsetMs = gameplayStartClockMs;
+                    
                     gameTrack?.Start(); // Resume the music
-                    Logger.Log("[GameScreen] Countdown finished, game resumed", LoggingTarget.Runtime, LogLevel.Important);
+                    Logger.Log($"[GameScreen] Countdown finished, game resumed (pause duration: {pauseDuration}ms)", LoggingTarget.Runtime, LogLevel.Important);
                 });
             });
         }
