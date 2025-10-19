@@ -6,6 +6,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
+using osu.Framework.Graphics.Video;
 using osu.Framework.Screens;
 using osu.Framework.Input.Events;
 using osuTK;
@@ -241,6 +242,30 @@ namespace TypeBeat.Game
         public override void OnResuming(ScreenTransitionEvent e)
         {
             base.OnResuming(e);
+            
+            Logger.Log("[SongSelection] Resuming from GameScreen", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Get the current track from MainScreen (in case beatpack changed during gameplay)
+            var currentTrack = mainScreen.GetCurrentTrack();
+            
+            // If track is not playing (because it was stopped when going to LoadingScreen),
+            // restart it from the beginning
+            if (currentTrack != null && !currentTrack.IsRunning)
+            {
+                currentTrack.Restart(); // This stops and starts from position 0
+                Logger.Log($"[SongSelection] Current track was not running, restarted from beginning", LoggingTarget.Runtime, LogLevel.Important);
+            }
+            else if (currentTrack != null)
+            {
+                Logger.Log($"[SongSelection] Current track is already running, continuing playback", LoggingTarget.Runtime, LogLevel.Important);
+            }
+            
+            // Restart video if present
+            if (backgroundContainer?.Child is Video video)
+            {
+                video.Loop = true; // Ensure it loops
+                Logger.Log("[SongSelection] Video found and set to loop", LoggingTarget.Runtime, LogLevel.Important);
+            }
         }
 
         public override bool OnExiting(ScreenExitEvent e)
@@ -374,7 +399,21 @@ namespace TypeBeat.Game
         
         private void handleSongSelected(Beatpack selectedBeatpack)
         {
+            // Stop the current track (from MainScreen) when switching beatpacks
+            mainScreen.StopCurrentTrack();
+            
             beatpackManager.CurrentBeatpack.Value = selectedBeatpack;
+            
+            // Get the newly loaded track from MainScreen and start it
+            Schedule(() =>
+            {
+                var newTrack = mainScreen.GetCurrentTrack();
+                if (newTrack != null && !newTrack.IsRunning)
+                {
+                    newTrack.Start();
+                    Logger.Log($"[SongSelection] Started new track for: {selectedBeatpack.Beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
+                }
+            });
             
             if (selectedBeatpack?.Beatmap != null)
             {
@@ -476,8 +515,16 @@ namespace TypeBeat.Game
 
             Logger.Log($"Starting game with beatpack: {beatpackManager.CurrentBeatpack.Value.Beatmap.Title}", LoggingTarget.Runtime, LogLevel.Important);
             
-            var gameScreen = new GameScreen(beatpackManager.CurrentBeatpack.Value, beatpackManager.CurrentBeatpack.Value.Beatmap);
-            this.Push(gameScreen);
+            // Stop ALL tracks - both the old track reference and MainScreen's current track
+            if (track != null && track.IsRunning)
+            {
+                track.Stop();
+            }
+            mainScreen.StopCurrentTrack();
+            
+            // Transition to loading screen
+            var loadingScreen = new LoadingScreen(beatpackManager.CurrentBeatpack.Value, beatpackManager.CurrentBeatpack.Value.Beatmap);
+            this.Push(loadingScreen);
         }
 
         protected override void Dispose(bool isDisposing)

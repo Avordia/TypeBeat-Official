@@ -41,7 +41,8 @@ namespace TypeBeat.Game
         private Footer footer;
         
         private bool isInMenuMode;
-    private bool isMenuTransitioning;
+        private bool isMenuTransitioning;
+        private bool shouldAutoPlayTrack = true; // Control whether beatpackChanged should auto-start track
         private Dictionary<Drawable, float> initialPositions;
         private const float menu_offset_x = 350f;  
         private const float animation_duration = 400;
@@ -95,6 +96,9 @@ namespace TypeBeat.Game
 
                                 this.Delay(400).Schedule(() =>
                                 {
+                                    // Disable auto-play when navigating away
+                                    shouldAutoPlayTrack = false;
+                                    
                                     RemoveInternal(backgroundContainer, false);
                                     var songSelection = new SongSelectionScreen(beatpackManager, backgroundContainer, this, track);
                                     this.Push(songSelection);
@@ -250,7 +254,12 @@ namespace TypeBeat.Game
                     {
                         track.Looping = true;
                         mainLogo.SetTrack(track);
-                        track.Start();
+                        
+                        // Only auto-start if we should (i.e., if MainScreen is active)
+                        if (shouldAutoPlayTrack)
+                        {
+                            track.Start();
+                        }
                     }
                 }
 
@@ -290,6 +299,9 @@ namespace TypeBeat.Game
         public override void OnResuming(ScreenTransitionEvent e)
         {
             base.OnResuming(e);
+            
+            // Re-enable auto-play when returning to MainScreen
+            shouldAutoPlayTrack = true;
             
             Logger.Log($"[MainScreen] OnResuming called", LoggingTarget.Runtime, LogLevel.Important);
             Logger.Log($"[MainScreen] backgroundContainer.Parent = {backgroundContainer?.Parent?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
@@ -342,6 +354,17 @@ namespace TypeBeat.Game
         {
             track?.Stop();
             return base.OnExiting(e);
+        }
+
+        public void StopCurrentTrack()
+        {
+            track?.Stop();
+            Logger.Log("[MainScreen] Track stopped via StopCurrentTrack()", LoggingTarget.Runtime, LogLevel.Important);
+        }
+
+        public Track GetCurrentTrack()
+        {
+            return track;
         }
 
         public void AddBackgroundContainer(Container container)

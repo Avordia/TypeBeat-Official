@@ -3,6 +3,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Audio;
+using osu.Framework.Audio.Track;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Rendering;
@@ -14,6 +16,7 @@ using osu.Framework.Input.Events;
 using osuTK;
 using osuTK.Input;
 using osu.Framework.Logging;
+using osu.Framework.IO.Stores;
 using TypeBeat.Game.Beatmaps;
 using TypeBeat.Game.Ui;
 using TypeBeat.Game.Gameplay.Judgement;
@@ -21,6 +24,7 @@ using TypeBeat.Game.Gameplay.Input;
 using TypeBeat.Game.Gameplay.Layout;
 using TypeBeat.Game.Gameplay.Appearance;
 using TypeBeat.Game.Gameplay.Scheduling;
+using TypeBeat.Game.Filehandling;
 
 namespace TypeBeat.Game
 {
@@ -55,9 +59,13 @@ namespace TypeBeat.Game
     private Container pauseOverlay;
     private bool isPaused = false;
     private double gameplayStartClockMs = 0;
+    private Track gameTrack;
 
         [Resolved]
         private IRenderer renderer { get; set; }
+
+        [Resolved]
+        private AudioManager audioManager { get; set; }
 
         public GameScreen(Beatpack beatpack, Beatmap beatmap)
         {
@@ -200,6 +208,34 @@ namespace TypeBeat.Game
         [BackgroundDependencyLoader]
         private void load()
         {
+            // Load game audio from beatpack
+            if (!string.IsNullOrEmpty(beatpack.MusicPath))
+            {
+                try
+                {
+                    using (var stream = File.OpenRead(beatpack.FilePath))
+                    {
+                        var beatmapAssetStorage = new ZipArchiveResourceStore(stream);
+                        var trackStore = audioManager.GetTrackStore(beatmapAssetStorage);
+                        gameTrack = trackStore.Get(beatpack.MusicPath);
+                        
+                        if (gameTrack != null)
+                        {
+                            gameTrack.Looping = false; // Don't loop gameplay music
+                            Logger.Log($"[GameScreen] Loaded audio track: {beatpack.MusicPath}", LoggingTarget.Runtime, LogLevel.Important);
+                        }
+                        else
+                        {
+                            Logger.Log($"[GameScreen] Failed to load audio track: {beatpack.MusicPath}", LoggingTarget.Runtime, LogLevel.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Failed to load game audio");
+                }
+            }
+            
             // Load background image
             if (!string.IsNullOrEmpty(beatpack.BackgroundImagePath))
             {
@@ -298,6 +334,15 @@ namespace TypeBeat.Game
         {
             base.OnEntering(e);
             this.FadeInFromZero(300);
+            
+            // Start the game audio - this marks the beginning of gameplay
+            if (gameTrack != null)
+            {
+                gameTrack.Start();
+                Logger.Log("[GameScreen] Started gameplay audio - game has begun!", LoggingTarget.Runtime, LogLevel.Important);
+            }
+            
+            // Capture when gameplay starts to make all timing relative to audio start
             gameplayStartClockMs = Clock.CurrentTime;
             noteScheduler.TimeOffsetMs = gameplayStartClockMs;
             Logger.Log($"GameScreen entered with beatmap: {beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
@@ -305,6 +350,19 @@ namespace TypeBeat.Game
 
         public override bool OnExiting(ScreenExitEvent e)
         {
+            // Stop and dispose the game audio when exiting
+            if (gameTrack != null)
+            {
+                if (gameTrack.IsRunning)
+                {
+                    gameTrack.Stop();
+                    Logger.Log("[GameScreen] Stopped gameplay audio", LoggingTarget.Runtime, LogLevel.Important);
+                }
+                gameTrack.Dispose();
+                gameTrack = null;
+                Logger.Log("[GameScreen] Disposed gameplay audio track", LoggingTarget.Runtime, LogLevel.Important);
+            }
+            
             this.FadeOut(300);
             return base.OnExiting(e);
         }
