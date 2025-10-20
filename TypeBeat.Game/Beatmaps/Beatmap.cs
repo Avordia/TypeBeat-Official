@@ -29,6 +29,9 @@ namespace TypeBeat.Game.Beatmaps
         [JsonProperty("DifficultyName")]
         public string DifficultyName { get; set; }
         public float StarRating { get; set; }
+
+        [JsonProperty("Gamemode")]
+        public string Gamemode { get; set; }
         
         [JsonProperty("BackgroundImage")]
         public string BackgroundImage { get; set; }

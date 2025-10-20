@@ -10,11 +10,7 @@ namespace TypeBeat.Game.Gameplay.Judgement
         Meh50,
         Miss
     }
-
-    /// <summary>
-    /// osu!-style hit windows. All values are milliseconds (absolute offset from the note's EndTime).
-    /// Defaults can be tuned per difficulty later.
-    /// </summary>
+    
     public class HitWindows
     {
         // Default thresholds (two-sided): |offset| <= threshold => corresponding judgement

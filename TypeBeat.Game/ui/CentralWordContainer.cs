@@ -9,10 +9,6 @@ using TypeBeat.Game.Gameplay.Typing;
 
 namespace TypeBeat.Game.Ui
 {
-    /// <summary>
-    /// Displays the current word to type in uppercase. Shrinks in width as letters are consumed.
-    /// Turns gold when only the space token remains.
-    /// </summary>
     public partial class CentralWordContainer : Container
     {
         private readonly Box background;
@@ -30,11 +26,13 @@ namespace TypeBeat.Game.Ui
             // Keep a consistent bar height even if text is empty (e.g., when '/' is hidden)
             AutoSizeAxes = Axes.None;
             RelativeSizeAxes = Axes.X;
-            Width = 0.45f; // Bigger container (was 0.35f)
-            Height = 80; // Taller height (was 64)
+            Width = 0.65f; // Much wider container for better visibility
+            Height = 90; // Much taller height
 
             Masking = true;
-            CornerRadius = 40; // Adjusted for new size
+            CornerRadius = 45; // Adjusted for new size
+            BorderThickness = 7.5f; // Very bold border
+            BorderColour = Colour4.White;
 
             InternalChildren = new Drawable[]
             {
@@ -66,28 +64,13 @@ namespace TypeBeat.Game.Ui
                         }
                     }
                 },
-                // White border (bolder)
-                new Container
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Masking = true,
-                    CornerRadius = 40,
-                    BorderThickness = 6, // Bolder border (was 3)
-                    BorderColour = Colour4.White,
-                    Child = new Box
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Alpha = 0,
-                        AlwaysPresent = true
-                    }
-                },
                 wordText = new SpriteText
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Font = new FontUsage("Kodchasan", size: 52, weight: "Bold"), // Bigger text (was 40)
+                    Font = new FontUsage("Kodchasan-Bold", size: 100), // MUCH bigger text
                     Colour = Colour4.White,
-                    Spacing = new Vector2(0.1f, 0) // 10% spacing
+                    Spacing = new Vector2(0.15f, 0) // 15% spacing for extra boldness
                 }
             };
         }
@@ -109,7 +92,7 @@ namespace TypeBeat.Game.Ui
             {
                 trapezoids.Add(new Container
                 {
-                    Size = new Vector2(trapezoidWidth, 80), // Match new height
+                    Size = new Vector2(trapezoidWidth, 90), // Match new height
                     Shear = new Vector2(0.4f, 0), // Creates trapezoid/stripe shape
                     Child = new Box
                     {
@@ -171,7 +154,6 @@ namespace TypeBeat.Game.Ui
 
         private void updateWidth()
         {
-            // Fixed width when only the space token ('/') remains, or when the whole word is just '/'.
             const float fixed_slash_width = 0.20f; // tweakable: a pleasant width for the gold state
 
             string remaining = consumed >= fullWord.Length ? string.Empty : fullWord[consumed..];
@@ -184,13 +166,10 @@ namespace TypeBeat.Game.Ui
                 return;
             }
 
-            // Otherwise shrink based on remaining LETTER count (exclude '/').
             remaining = consumed >= fullWord.Length ? string.Empty : fullWord[consumed..];
             int remainingCount = remaining.Count(ch => ch != TypingConstants.SpaceToken);
-            // Minimum and maximum width ratios.
-            float min = 0.15f;
-            float max = 0.40f;
-            // Map remaining letters (0..10) into [min,max]. Clamp for sanity.
+            float min = 0.25f; // Wider minimum width
+            float max = 0.65f; // Wider maximum width
             float t = remainingCount / 10f;
             if (t < 0) t = 0; if (t > 1) t = 1;
             Width = min + (max - min) * t;

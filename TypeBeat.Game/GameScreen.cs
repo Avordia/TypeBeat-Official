@@ -53,7 +53,7 @@ namespace TypeBeat.Game
         private readonly Container playfield;
         private readonly LayoutConfig layoutConfig = new LayoutConfig
         {
-            HalfGapXFraction = 0.115f
+            HalfGapXFraction = 0.2f 
         };
         private readonly NoteAppearanceConfig appearanceConfig = new NoteAppearanceConfig();
         private readonly NoteScheduler noteScheduler;
@@ -90,16 +90,14 @@ namespace TypeBeat.Game
 
             InternalChildren = new Drawable[]
             {
-                // Background
                 backgroundSprite = new Sprite
                 {
                     RelativeSizeAxes = Axes.Both,
                     FillMode = FillMode.Fill,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Alpha = 0.5f // Dimmed for gameplay visibility
+                    Alpha = 0.5f 
                 },
-                // Debug overlay (top-left)
                 new Container
                 {
                     Anchor = Anchor.TopLeft,
@@ -113,42 +111,40 @@ namespace TypeBeat.Game
                         Text = "debug..."
                     }
                 },
-                // Health bar with t6 logo and parallelogram segments (Figma design)
                 healthBarContainer = new Container
                 {
                     Anchor = Anchor.TopLeft,
                     Origin = Anchor.TopLeft,
-                    Position = new Vector2(90, 20), // Moved right so logo is visible
+                    Position = new Vector2(90, 80), 
                     AutoSizeAxes = Axes.Both,
                     Children = new Drawable[]
                     {
                         new FillFlowContainer
                         {
-                            Direction = FillDirection.Horizontal, // Changed to horizontal for same Y axis
+                            Direction = FillDirection.Horizontal,
                             AutoSizeAxes = Axes.Both,
-                            Spacing = new Vector2(10, 0), // Space between logo and health bar
+                            Spacing = new Vector2(10, 0), 
                             Children = new Drawable[]
                             {
-                                // t6 logo (maintain aspect ratio)
                                 new Container
                                 {
-                                    Size = new Vector2(50, 50), // Larger logo size
+                                    Size = new Vector2(45, 45),
                                     Anchor = Anchor.CentreLeft,
                                     Origin = Anchor.CentreLeft,
-                                    Y = 5, // Move down slightly
+                                    Y = 3,
                                     Child = healthBarLogo = new Sprite
                                     {
                                         Anchor = Anchor.Centre,
                                         Origin = Anchor.Centre,
                                         RelativeSizeAxes = Axes.Both,
-                                        FillMode = FillMode.Fit, // Maintain aspect ratio
+                                        FillMode = FillMode.Fit,
                                         EdgeSmoothness = new Vector2(2.0f) // Anti-aliasing for smooth edges
                                     }
                                 },
-                                // Parallelogram health bar segments
+
                                 new Container
                                 {
-                                    Size = new Vector2(300, 20), // Smaller bar
+                                    Size = new Vector2(220, 15), // Much smaller bar
                                     Anchor = Anchor.CentreLeft,
                                     Origin = Anchor.CentreLeft,
                                     Child = new FillFlowContainer
@@ -156,7 +152,7 @@ namespace TypeBeat.Game
                                         Direction = FillDirection.Horizontal,
                                         AutoSizeAxes = Axes.None,
                                         RelativeSizeAxes = Axes.Both,
-                                        Spacing = new Vector2(3, 0) // Smaller spacing (was 5)
+                                        Spacing = new Vector2(9, 0) 
                                     }
                                 }
                             }
@@ -173,7 +169,7 @@ namespace TypeBeat.Game
                     Child = scoreText = new SpriteText
                     {
                         Text = "000000000000", // 12 digits
-                        Font = new FontUsage("Kodchasan", size: 48, weight: "Bold"),
+                        Font = new FontUsage("Kodchasan", size: 56, weight: "Bold"), // Larger font
                         Colour = Colour4.White,
                         Spacing = new Vector2(0.25f, 0) // 25% spacing
                     }
@@ -205,7 +201,7 @@ namespace TypeBeat.Game
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Y = 60,
+                    Y = 90,
                     AutoSizeAxes = Axes.Both,
                     Child = comboText = new SpriteText
                     {
@@ -245,13 +241,13 @@ namespace TypeBeat.Game
                                     new SpriteText
                                     {
                                         Text = "ACCURACY:", // All caps
-                                        Font = new FontUsage("Kodchasan", size: 28, weight: "Bold"),
+                                        Font = new FontUsage("Kodchasan", size: 34, weight: "Bold"), // Larger font
                                         Colour = Colour4.White
                                     },
                                     accuracyText = new SpriteText
                                     {
                                         Text = "100.0%",
-                                        Font = new FontUsage("Kodchasan", size: 28, weight: "Bold"),
+                                        Font = new FontUsage("Kodchasan", size: 34, weight: "Bold"), // Larger font
                                         Colour = Colour4.Lime
                                     }
                                 }
@@ -311,8 +307,8 @@ namespace TypeBeat.Game
                 Colour4.FromHex("#222255")  // Dark blue
             };
             
-            float segmentWidth = 18f;      // Smaller width
-            float segmentHeight = 20f;     // Smaller height
+            float segmentWidth = 13f;      // Smaller width
+            float segmentHeight = 15f;     // Smaller height
             float skewAmount = 0.3f;       // Creates parallelogram effect
             
             for (int i = 0; i < healthSegmentCount; i++)
@@ -518,7 +514,6 @@ namespace TypeBeat.Game
 
         private void UpdateHealth(JudgementType judgement)
         {
-            // Health gain/loss based on judgement (osu! style)
             double healthChange = judgement switch
             {
                 JudgementType.Perfect300 => 0.01,   // +1% health
