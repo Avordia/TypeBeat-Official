@@ -37,6 +37,7 @@ namespace TypeBeat.Game
             AddFont(Resources, "Fonts/Kodchasan-Bold");
             // Inter font
             AddFont(Resources, "Fonts/Inter");
+            AddFont(Resources, "Fonts/Inter-Bold");
         }
     }
 }

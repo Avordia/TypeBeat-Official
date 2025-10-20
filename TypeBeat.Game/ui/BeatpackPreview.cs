@@ -19,21 +19,28 @@ namespace TypeBeat.Game.Ui
         private readonly Sprite backgroundSprite;
         private readonly SpriteText titleText;
         private readonly SpriteText artistText;
-        private readonly SpriteText difficultyText;
+        private readonly SpriteText difficultyNameText;
+        private readonly Container difficultyBarContainer;
+        private readonly Box difficultyBarFill;
         private readonly SpriteText starRatingText;
-        private readonly BeatReactiveContainer titleArtistContainer;
+        private readonly ClickableContainer playButton;
         
         [Resolved]
         private IRenderer renderer { get; set; }
         
+        [Resolved]
+        private TextureStore textures { get; set; }
+        
         public BeatpackPreview()
         {
-            // Sizing is controlled by parent, don't set here
             Masking = true;
-            CornerRadius = 20;
+            CornerRadius = 30;
+            BorderThickness = 3;
+            BorderColour = Colour4.FromHex("#4A9EFF"); // Blue border like in Figma
 
             Children = new Drawable[]
             {
+                // Background image
                 backgroundSprite = new Sprite
                 {
                     RelativeSizeAxes = Axes.Both,
@@ -42,78 +49,167 @@ namespace TypeBeat.Game.Ui
                     Origin = Anchor.Centre,
                     Alpha = 0
                 },
-                // Top-left: Title and Artist
+                // Dark overlay for better text readability
+                new Box
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Colour = Colour4.Black,
+                    Alpha = 0.3f
+                },
+                // Right side: Title and Artist
                 new Container
                 {
-                    Anchor = Anchor.TopLeft,
-                    Origin = Anchor.TopLeft,
-                    AutoSizeAxes = Axes.Both,
-                    Padding = new MarginPadding(30), // Extra padding to prevent clipping
-                    Child = titleArtistContainer = new BeatReactiveContainer
+                    Anchor = Anchor.CentreRight,
+                    Origin = Anchor.CentreRight,
+                    RelativeSizeAxes = Axes.Both,
+                    Width = 0.4f, // Take 40% of right side
+                    Padding = new MarginPadding { Right = 30 },
+                    Child = new FillFlowContainer
                     {
-                        AutoSizeAxes = Axes.Both,
-                        MaxScalePercentage = 1.12f, // Subtle beat reaction
-                        Child = new FillFlowContainer
+                        Anchor = Anchor.CentreRight,
+                        Origin = Anchor.CentreRight,
+                        Direction = FillDirection.Vertical,
+                        AutoSizeAxes = Axes.Y,
+                        RelativeSizeAxes = Axes.X,
+                        Spacing = new Vector2(0, 10),
+                        Children = new Drawable[]
                         {
-                            Direction = FillDirection.Vertical,
-                            AutoSizeAxes = Axes.Both,
-                            Spacing = new Vector2(0, 5),
-                            Children = new Drawable[]
+                            titleText = new SpriteText
                             {
-                                titleText = new SpriteText
-                                {
-                                    Font = new FontUsage("Kodchasan", size: 40, weight: "Bold"),
-                                    Colour = Colour4.White,
-                                    Shadow = true,
-                                    ShadowColour = Colour4.Black,
-                                    Alpha = 0
-                                },
-                                artistText = new SpriteText
-                                {
-                                    Font = new FontUsage("Kodchasan", size: 28),
-                                    Colour = Colour4.White.Opacity(0.9f),
-                                    Shadow = true,
-                                    ShadowColour = Colour4.Black,
-                                    Alpha = 0
-                                }
+                                Anchor = Anchor.TopRight,
+                                Origin = Anchor.TopRight,
+                                Font = new FontUsage("Inter", size: 42, weight: "Bold"),
+                                Colour = Colour4.White,
+                                Spacing = new Vector2(0.5f, 0), // 50% spacing
+                                Alpha = 0
+                            },
+                            artistText = new SpriteText
+                            {
+                                Anchor = Anchor.TopRight,
+                                Origin = Anchor.TopRight,
+                                Font = new FontUsage("Inter", size: 28),
+                                Colour = Colour4.White.Opacity(0.8f),
+                                Spacing = new Vector2(0.25f, 0), // 25% spacing
+                                Alpha = 0
                             }
                         }
                     }
                 },
-                // Bottom-left: Difficulty and Stars
+                // Bottom-left: Difficulty button and bar
                 new Container
                 {
                     Anchor = Anchor.BottomLeft,
                     Origin = Anchor.BottomLeft,
                     AutoSizeAxes = Axes.Both,
-                    Padding = new MarginPadding(30), // Extra padding to prevent clipping
+                    Padding = new MarginPadding(30),
                     Child = new FillFlowContainer
                     {
                         Direction = FillDirection.Vertical,
                         AutoSizeAxes = Axes.Both,
-                        Spacing = new Vector2(0, 5),
+                        Spacing = new Vector2(0, 15),
                         Children = new Drawable[]
                         {
-                            difficultyText = new SpriteText
+                            // Difficulty button
+                            new Container
                             {
-                                Font = new FontUsage("Kodchasan", size: 32, weight: "Bold"),
-                                Colour = Colour4.White,
-                                Shadow = true,
-                                ShadowColour = Colour4.Black,
-                                Alpha = 0
+                                AutoSizeAxes = Axes.Both,
+                                Masking = true,
+                                CornerRadius = 20,
+                                Children = new Drawable[]
+                                {
+                                    new Box
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        Colour = Colour4.FromHex("#2C2C2C") // Dark gray background
+                                    },
+                                    difficultyNameText = new SpriteText
+                                    {
+                                        Font = new FontUsage("Inter", size: 24),
+                                        Colour = Colour4.White,
+                                        Spacing = new Vector2(0.25f, 0), // 25% spacing
+                                        Margin = new MarginPadding { Horizontal = 30, Vertical = 10 },
+                                        Alpha = 0
+                                    }
+                                }
                             },
-                            starRatingText = new SpriteText
+                            // Difficulty bar with star rating
+                            new FillFlowContainer
                             {
-                                Font = new FontUsage("Kodchasan", size: 24),
-                                Colour = Colour4.Yellow,
-                                Shadow = true,
-                                ShadowColour = Colour4.Black,
-                                Alpha = 0
+                                Direction = FillDirection.Vertical,
+                                AutoSizeAxes = Axes.Y,
+                                Width = 300,
+                                Spacing = new Vector2(0, 8),
+                                Children = new Drawable[]
+                                {
+                                    starRatingText = new SpriteText
+                                    {
+                                        Font = new FontUsage("Inter", size: 16),
+                                        Colour = Colour4.White,
+                                        Spacing = new Vector2(0.25f, 0), // 25% spacing
+                                        Alpha = 0
+                                    },
+                                    difficultyBarContainer = new Container
+                                    {
+                                        Height = 10,
+                                        Width = 300,
+                                        Masking = true,
+                                        CornerRadius = 5,
+                                        Children = new Drawable[]
+                                        {
+                                            new Box
+                                            {
+                                                RelativeSizeAxes = Axes.Both,
+                                                Colour = Colour4.FromHex("#2C2C2C") // Dark background
+                                            },
+                                            difficultyBarFill = new Box
+                                            {
+                                                RelativeSizeAxes = Axes.Y,
+                                                Width = 0, // Will be set based on star rating
+                                                Colour = Colour4.White,
+                                                Alpha = 0
+                                            }
+                                        }
+                                    }
+                                }
                             }
+                        }
+                    }
+                },
+                // Bottom-right: Play button
+                playButton = new ClickableContainer
+                {
+                    Anchor = Anchor.BottomRight,
+                    Origin = Anchor.BottomRight,
+                    Size = new Vector2(80, 80),
+                    Margin = new MarginPadding(30),
+                    Masking = true,
+                    CornerRadius = 40,
+                    Alpha = 0,
+                    Children = new Drawable[]
+                    {
+                        new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Colour = Colour4.FromHex("#4CAF50") // Green
+                        },
+                        new SpriteIcon
+                        {
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Icon = FontAwesome.Solid.Play,
+                            Size = new Vector2(30),
+                            Colour = Colour4.White,
+                            X = 3 // Slight offset to center the play icon visually
                         }
                     }
                 }
             };
+        }
+
+        [BackgroundDependencyLoader]
+        private void load()
+        {
+            // No longer loading logo here - it's in SongSelectionScreen
         }
 
         public void ShowBeatpack(Beatpack beatpack)
@@ -124,26 +220,25 @@ namespace TypeBeat.Game.Ui
             // Update text fields
             if (beatpack.Beatmap != null)
             {
-                titleText.Text = beatpack.Beatmap.Title ?? "Unknown Title";
+                titleText.Text = (beatpack.Beatmap.Title ?? "Unknown Title").ToUpperInvariant();
                 artistText.Text = beatpack.Beatmap.Artist ?? "Unknown Artist";
-                difficultyText.Text = beatpack.Beatmap.DifficultyName ?? "Normal";
+                difficultyNameText.Text = (beatpack.Beatmap.DifficultyName ?? "NORMAL").ToUpperInvariant();
                 
-                // Show star rating if it exists (greater than 0)
-                if (beatpack.Beatmap.StarRating > 0)
-                {
-                    starRatingText.Text = $"★ {beatpack.Beatmap.StarRating:F1}";
-                }
-                else
-                {
-                    starRatingText.Text = string.Empty;
-                }
+                // Update star rating and bar
+                float starRating = beatpack.Beatmap.StarRating;
+                starRatingText.Text = $"STAR RATING: {starRating:F1}";
+                
+                // Calculate bar fill percentage (max is 10 stars)
+                float fillPercentage = Math.Clamp(starRating / 10f, 0f, 1f);
+                difficultyBarFill.ResizeWidthTo(fillPercentage, 500, Easing.OutQuint);
 
-                // Fade in text
+                // Fade in elements
                 titleText.FadeIn(300, Easing.OutQuint);
                 artistText.FadeIn(300, Easing.OutQuint);
-                difficultyText.FadeIn(300, Easing.OutQuint);
-                if (beatpack.Beatmap.StarRating > 0)
-                    starRatingText.FadeIn(300, Easing.OutQuint);
+                difficultyNameText.FadeIn(300, Easing.OutQuint);
+                starRatingText.FadeIn(300, Easing.OutQuint);
+                difficultyBarFill.FadeIn(300, Easing.OutQuint);
+                playButton.FadeIn(300, Easing.OutQuint);
             }
 
             if (string.IsNullOrEmpty(beatpack.BackgroundImagePath))
@@ -186,12 +281,9 @@ namespace TypeBeat.Game.Ui
             });
         }
 
-        /// <summary>
-        /// Set the audio track for beat reaction
-        /// </summary>
-        public void SetTrack(ITrack track)
+        public void SetPlayButtonAction(Action action)
         {
-            titleArtistContainer.SetTrack(track);
+            playButton.Action = action;
         }
     }
 }

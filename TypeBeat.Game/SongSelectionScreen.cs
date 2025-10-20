@@ -23,13 +23,14 @@ namespace TypeBeat.Game
         private readonly Container backgroundContainer;
         private readonly MainScreen mainScreen;
         private readonly Track track;
-        private readonly Header header;
-        private readonly Footer footer;
         private readonly Container backgroundLayer;
         private Box darkOverlay;
         private BeatpackPreview beatpackPreview;
         private SongThumbnail selectedThumbnail;
         private DifficultyButton selectedDifficultyButton;
+        private Container logoContainer;
+        private Container infoContainer;
+        private BasicScrollContainer songThumbnailList;
 
         public SongSelectionScreen(BeatpackManager beatpackManager, Container backgroundContainer, MainScreen mainScreen, Track track)
         {
@@ -46,8 +47,66 @@ namespace TypeBeat.Game
                     Name = "Background Layer"
                 },
 
-                header = new Header { Alpha = 0 },
-                footer = new Footer { Alpha = 0 },
+                // TOP-LEFT: TypeBeat Logo with Text
+                logoContainer = new Container
+                {
+                    Name = "Logo Container",
+                    Anchor = Anchor.TopLeft,
+                    Origin = Anchor.TopLeft,
+                    Size = new Vector2(200, 60),
+                    Margin = new MarginPadding(30), // Use MARGIN instead of Padding
+                    Depth = -1000,
+                    Child = new Sprite
+                    {
+                        Name = "Logo Sprite",
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        RelativeSizeAxes = Axes.Both,
+                        FillMode = FillMode.Fit,
+                        Texture = null // Will be loaded in load()
+                    }
+                },
+
+                // TOP-RIGHT: HORIZONTAL DIFFICULTY CONTAINER
+                infoContainer = new Container
+                {
+                    Name = "Info Container",
+                    Anchor = Anchor.TopRight,
+                    Origin = Anchor.TopRight,
+                    RelativeSizeAxes = Axes.Both,
+                    Width = 0.7f, // 70% of screen width
+                    Height = 0.2f, // 20% of screen height
+                    Margin = new MarginPadding(30),
+                    Depth = -1000,
+                    Children = new Drawable[]
+                    {
+                        new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Colour = Colour4.Black,
+                            Alpha = 0.6f
+                        },
+                        new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Padding = new MarginPadding(15),
+                            Child = new BasicScrollContainer(Direction.Horizontal)
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                ScrollbarVisible = false,
+                                ClampExtension = 20,
+                                Child = new FillFlowContainer
+                                {
+                                    Name = "Difficulty List",
+                                    RelativeSizeAxes = Axes.Y, // Fill height
+                                    AutoSizeAxes = Axes.X, // Expand width based on content
+                                    Spacing = new Vector2(15, 0),
+                                    Direction = FillDirection.Horizontal
+                                }
+                            }
+                        }
+                    }
+                },
 
                 beatpackPreview = new BeatpackPreview
                 {
@@ -55,150 +114,39 @@ namespace TypeBeat.Game
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     RelativeSizeAxes = Axes.Both,
-                    Height = 0.8f,
-                    Width = 0.62f, // Reduced to give space for right container
+                    Height = 0.6f, // 70% of screen height
+                    Width = 0.9f,  // 70% of screen width
+                    Y = -20,
+                    Depth = 0, // Default depth, behind logo and difficulty
                 },
-                // SONG LIST CONTAINER
+                
+                // HORIZONTAL SONG LIST CONTAINER AT BOTTOM - TRANSPARENT
                 new Container
                 {
                     Name = "Song List Container",
-                    Anchor = Anchor.CentreLeft,
-                    Origin = Anchor.CentreLeft,
-                    RelativeSizeAxes = Axes.Both,
-                    Height = 0.8f,
-                    Width = 0.08f, // Thinner (12%)
-                    X = 60, // More gap from left edge
-                    Masking = true,
-                    CornerRadius = 20,
-                    Children = new Drawable[]
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
+                    RelativeSizeAxes = Axes.X,
+                    Height = 120,
+                    Width = 0.90f,
+                    Y = -20,
+                    Child = new Container
                     {
-                        new Box
+                        RelativeSizeAxes = Axes.Both,
+                        Padding = new MarginPadding { Horizontal = 20, Vertical = 10 },
+                        Child = songThumbnailList = new BasicScrollContainer(Direction.Horizontal)
                         {
                             RelativeSizeAxes = Axes.Both,
-                            Colour = Colour4.Black,
-                            Alpha = 0.5f
-                        },
-                        new Container
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Padding = new MarginPadding { Left = 5, Vertical = 30 },
-                            Child = new BasicScrollContainer
+                            ScrollbarVisible = false,
+                            ClampExtension = 20,
+                            Child = new FillFlowContainer
                             {
-                                RelativeSizeAxes = Axes.Both,
-                                ScrollbarVisible = false,
-                                ClampExtension = 20,
-                                Child = new FillFlowContainer
-                                {
-                                    Name = "Song Thumbnails",
-                                    RelativeSizeAxes = Axes.X,
-                                    AutoSizeAxes = Axes.Y,
-                                    Spacing = new Vector2(0, 10),
-                                    Padding = new MarginPadding { Horizontal = 2, Vertical = 2 },
-                                    Direction = FillDirection.Vertical
-                                }
-                            }
-                        }
-                    }
-                },
-
-                //DIFFICULTY CONTAINER
-                new Container
-                {
-                    Name = "Info Container",
-                    Anchor = Anchor.CentreRight,
-                    Origin = Anchor.CentreRight,
-                    RelativeSizeAxes = Axes.Both,
-                    Height = 0.8f,
-                    Width = 0.1f,
-                    X = -60,
-                    Children = new Drawable[]
-                    {
-                        // Top section: Difficulty List (7/8 of height)
-                        new Container
-                        {
-                            Name = "Difficulty Section",
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.TopCentre,
-                            RelativeSizeAxes = Axes.Both,
-                            Height = 7f / 8f, // 7/8 of the height
-                            Masking = true,
-                            CornerRadius = 20,
-                            Children = new Drawable[]
-                            {
-                                new Box
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Colour = Colour4.Black,
-                                    Alpha = 0.5f
-                                },
-                                new Container
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Padding = new MarginPadding { Horizontal = 10, Vertical = 10 },
-                                    Child = new BasicScrollContainer
-                                    {
-                                        RelativeSizeAxes = Axes.Both,
-                                        ScrollbarVisible = false,
-                                        ClampExtension = 20,
-                                        Child = new FillFlowContainer
-                                        {
-                                            Name = "Difficulty List",
-                                            RelativeSizeAxes = Axes.X,
-                                            AutoSizeAxes = Axes.Y,
-                                            Spacing = new Vector2(0, 10),
-                                            Direction = FillDirection.Vertical
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        // Bottom section: Play Button (1/8 of height)
-                        new Container
-                        {
-                            Name = "Play Button Section",
-                            Anchor = Anchor.BottomCentre,
-                            Origin = Anchor.BottomCentre,
-                            RelativeSizeAxes = Axes.Both,
-                            Height = 1f / 8f, // 1/8 of the height
-                            Masking = true,
-                            CornerRadius = 20,
-                            Children = new Drawable[]
-                            {
-                                new Box
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Colour = Colour4.Black,
-                                    Alpha = 0.5f
-                                },
-                                new Container
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Padding = new MarginPadding(10),
-                                    Child = new ClickableContainer
-                                    {
-                                        Name = "Play Button Container",
-                                        RelativeSizeAxes = Axes.Both,
-                                        Masking = true,
-                                        CornerRadius = 15,
-                                        Action = () => startGame(),
-                                        Children = new Drawable[]
-                                        {
-                                            new Box
-                                            {
-                                                RelativeSizeAxes = Axes.Both,
-                                                Colour = Colour4.FromHex("4CAF50"), // Green color
-                                            },
-                                            new SpriteText
-                                            {
-                                                Anchor = Anchor.Centre,
-                                                Origin = Anchor.Centre,
-                                                Text = "PLAY",
-                                                Font = new FontUsage("Kodchasan", size: 32, weight: "Bold"),
-                                                Colour = Colour4.White
-                                            }
-                                        }
-                                    }
-                                }
+                                Name = "Song Thumbnails",
+                                AutoSizeAxes = Axes.X,
+                                RelativeSizeAxes = Axes.Y,
+                                Spacing = new Vector2(15, 0),
+                                Padding = new MarginPadding { Horizontal = 2 },
+                                Direction = FillDirection.Horizontal
                             }
                         }
                     }
@@ -208,6 +156,10 @@ namespace TypeBeat.Game
 
         public override void OnEntering(ScreenTransitionEvent e)
         {
+            Logger.Log("==============================================", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log("=== ENTERING SONG SELECTION SCREEN ===", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log("==============================================", LoggingTarget.Runtime, LogLevel.Important);
+
             base.OnEntering(e);
 
             addBackground();
@@ -215,28 +167,32 @@ namespace TypeBeat.Game
             // Show the currently playing beatpack's background and difficulty
             if (beatpackManager.CurrentBeatpack.Value != null)
             {
+                Logger.Log($"[SongSelection] Current beatpack: {beatpackManager.CurrentBeatpack.Value.Beatmap.DifficultyName}", LoggingTarget.Runtime, LogLevel.Important);
                 beatpackPreview.ShowBeatpack(beatpackManager.CurrentBeatpack.Value);
                 updateDifficultyList(beatpackManager.CurrentBeatpack.Value);
+            }
+            else
+            {
+                Logger.Log("[SongSelection] No current beatpack!", LoggingTarget.Runtime, LogLevel.Important);
             }
 
             this.FadeInFromZero(150);
 
-            header.Alpha = 0;
-            footer.Alpha = 0;
-            var songList = InternalChildren.FirstOrDefault(c => c.Name == "Song List Container");
-            var infoContainer = InternalChildren.FirstOrDefault(c => c.Name == "Info Container");
-            if (songList != null) songList.Alpha = 0;
-            if (infoContainer != null) infoContainer.Alpha = 0;
+            Logger.Log($"[SongSelection] Logo - Pos: {logoContainer.Position}, Size: {logoContainer.Size}, Alpha: {logoContainer.Alpha}, Depth: {logoContainer.Depth}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[SongSelection] Info - Pos: {infoContainer.Position}, Size: {infoContainer.Size}, Alpha: {infoContainer.Alpha}, Depth: {infoContainer.Depth}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Start these visible or fade them in
+            logoContainer.FadeIn(0); // Immediately visible
+            infoContainer.FadeIn(0); // Immediately visible
+            songThumbnailList.Parent.Alpha = 0; // Parent is the Song List Container
 
             using (BeginDelayedSequence(100))
             {
-                header.FadeIn(350, Easing.OutQuint);
-                footer.FadeIn(350, Easing.OutQuint);
-                songList?.FadeIn(350, Easing.OutQuint);
-                infoContainer?.FadeIn(350, Easing.OutQuint);
+                songThumbnailList.Parent.FadeIn(350, Easing.OutQuint);
             }
 
             dumpChildrenOrder("OnEntering after addBackground");
+            Logger.Log("=== SONG SELECTION ENTRY COMPLETE ===", LoggingTarget.Runtime, LogLevel.Important);
         }
 
         public override void OnResuming(ScreenTransitionEvent e)
@@ -273,8 +229,6 @@ namespace TypeBeat.Game
             Logger.Log($"[SongSelection] Returning background to MainScreen", LoggingTarget.Runtime, LogLevel.Important);
             mainScreen.AddBackgroundContainer(backgroundContainer);
             
-            header.FadeOut(250, Easing.OutQuint);
-            footer.FadeOut(250, Easing.OutQuint);
             this.FadeOut(300, Easing.OutQuint);
 
             return base.OnExiting(e);
@@ -342,30 +296,34 @@ namespace TypeBeat.Game
         [BackgroundDependencyLoader]
         private void load(TextureStore textures)
         {
-            // Set the track for beat reaction
-            if (track != null)
+            // Load the TypeBeat logo texture directly
+            var logoSprite = logoContainer.Child as Sprite;
+            if (logoSprite != null)
             {
-                beatpackPreview.SetTrack(track);
+                var texture = textures.Get("images/logo/LogoWithText");
+                if (texture != null)
+                {
+                    logoSprite.Texture = texture;
+                    Logger.Log("[SongSelection] Logo texture loaded successfully", LoggingTarget.Runtime, LogLevel.Important);
+                }
+                else
+                {
+                    Logger.Log("[SongSelection] ERROR: Logo texture not found at 'images/logo/LogoWithText'", LoggingTarget.Runtime, LogLevel.Error);
+                }
             }
 
-            var songListContainer = InternalChildren.OfType<Container>()
-                                    .FirstOrDefault(x => x.Name == "Song List Container");
+            // Wire up the play button in BeatpackPreview
+            beatpackPreview.SetPlayButtonAction(() => startGame());
 
-            var scrollContainer = songListContainer?.Children.OfType<Container>().FirstOrDefault()
-                                    ?.Children.OfType<BasicScrollContainer>()
-                                    .FirstOrDefault();
-
-            if (scrollContainer == null)
-                return;
-
-            var songContainer = (FillFlowContainer)scrollContainer.Child;
+            // Get the song container (FillFlowContainer inside the scroll container)
+            var songContainer = (FillFlowContainer)songThumbnailList.Child;
 
             foreach (var beatpack in beatpackManager.Beatpacks)
             {
                 var thumbnail = new SongThumbnail(beatpack, textures)
                 {
-                    Anchor = Anchor.TopCentre,
-                    Origin = Anchor.TopCentre
+                    Anchor = Anchor.CentreLeft,
+                    Origin = Anchor.CentreLeft
                 };
 
                 thumbnail.OnSelected += (selected) =>
@@ -424,32 +382,12 @@ namespace TypeBeat.Game
 
         private void updateDifficultyList(Beatpack beatpack)
         {
-            Logger.Log($"[updateDifficultyList] Starting update for beatpack: {beatpack?.Beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[updateDifficultyList] Starting update - showing ALL beatpacks as difficulties", LoggingTarget.Runtime, LogLevel.Important);
             
-            var infoContainer = InternalChildren.OfType<Container>()
-                                .FirstOrDefault(x => x.Name == "Info Container");
-            
-            Logger.Log($"[updateDifficultyList] Info Container found: {infoContainer != null}", LoggingTarget.Runtime, LogLevel.Important);
-            
-            // Navigate to the Difficulty Section, then to its scroll container
-            var difficultySection = infoContainer?.Children.OfType<Container>()
-                                .FirstOrDefault(x => x.Name == "Difficulty Section");
-            
-            Logger.Log($"[updateDifficultyList] Difficulty Section found: {difficultySection != null}", LoggingTarget.Runtime, LogLevel.Important);
-            
-            if (difficultySection != null)
-            {
-                Logger.Log($"[updateDifficultyList] Difficulty Section has {difficultySection.Children.Count()} children", LoggingTarget.Runtime, LogLevel.Important);
-                foreach (var child in difficultySection.Children)
-                {
-                    Logger.Log($"[updateDifficultyList]   Child: {child.GetType().Name}, Name={child.Name}", LoggingTarget.Runtime, LogLevel.Important);
-                }
-            }
-            
-            var paddingContainer = difficultySection?.Children.OfType<Container>().FirstOrDefault();
-            Logger.Log($"[updateDifficultyList] Padding Container found: {paddingContainer != null}", LoggingTarget.Runtime, LogLevel.Important);
-            
+            // Navigate through the structure: Info Container -> Box (skipped) -> Container (padding) -> BasicScrollContainer
+            var paddingContainer = infoContainer.Children.OfType<Container>().FirstOrDefault();
             var scrollContainer = paddingContainer?.Children.OfType<BasicScrollContainer>().FirstOrDefault();
+            
             Logger.Log($"[updateDifficultyList] Scroll Container found: {scrollContainer != null}", LoggingTarget.Runtime, LogLevel.Important);
             
             if (scrollContainer == null)
@@ -466,11 +404,15 @@ namespace TypeBeat.Game
             if (selectedDifficultyButton != null)
                 selectedDifficultyButton.IsSelected = false;
 
-            if (beatpack?.Beatmap != null)
+            // Show ALL beatpacks as difficulty options
+            foreach (var bp in beatpackManager.Beatpacks)
             {
-                Logger.Log($"[updateDifficultyList] Creating difficulty button for: {beatpack.Beatmap.DifficultyName}", LoggingTarget.Runtime, LogLevel.Important);
+                if (bp?.Beatmap == null)
+                    continue;
+
+                Logger.Log($"[updateDifficultyList] Creating difficulty button for: {bp.Beatmap.DifficultyName} (★{bp.Beatmap.StarRating})", LoggingTarget.Runtime, LogLevel.Important);
                 
-                var diffButton = new DifficultyButton(beatpack.Beatmap);
+                var diffButton = new DifficultyButton(bp.Beatmap);
                 diffButton.OnSelected += (beatmap) =>
                 {
                     if (selectedDifficultyButton != null)
@@ -484,15 +426,15 @@ namespace TypeBeat.Game
                 
                 difficultyList.Add(diffButton);
                 
-                selectedDifficultyButton = diffButton;
-                selectedDifficultyButton.IsSelected = true;
-                
-                Logger.Log($"[updateDifficultyList] ✓ Successfully added difficulty button. List now has {difficultyList.Children.Count()} items", LoggingTarget.Runtime, LogLevel.Important);
+                // Auto-select the currently selected beatpack's difficulty
+                if (bp == beatpack)
+                {
+                    selectedDifficultyButton = diffButton;
+                    selectedDifficultyButton.IsSelected = true;
+                }
             }
-            else
-            {
-                Logger.Log("[updateDifficultyList] Beatpack or Beatmap is null!", LoggingTarget.Runtime, LogLevel.Error);
-            }
+            
+            Logger.Log($"[updateDifficultyList] ✓ Successfully added {difficultyList.Children.Count()} difficulty buttons", LoggingTarget.Runtime, LogLevel.Important);
         }
 
         private void handleDifficultySelected(Beatmap selectedBeatmap)
