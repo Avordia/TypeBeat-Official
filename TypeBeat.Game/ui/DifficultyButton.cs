@@ -12,7 +12,6 @@ namespace TypeBeat.Game.Ui
     public partial class DifficultyButton : ClickableContainer
     {
         private readonly Box background;
-        private readonly Container selectionIndicator;
         private readonly SpriteText difficultyText;
         private readonly Beatmap beatmap;
         
@@ -33,64 +32,90 @@ namespace TypeBeat.Game.Ui
         {
             this.beatmap = beatmap;
             
-            RelativeSizeAxes = Axes.Y; // Fill the height of the container
-            AutoSizeAxes = Axes.X; // Width based on text content
-            Masking = true;
-            CornerRadius = 15;
+            Anchor = Anchor.CentreLeft;
+            Origin = Anchor.CentreLeft;
+            AutoSizeAxes = Axes.Both; 
 
             Children = new Drawable[]
             {
-                background = new Box
+                // Outer container for border
+                new Container
                 {
-                    RelativeSizeAxes = Axes.Both,
-                    Colour = Colour4.FromHex("#2C2C2C"), // Dark gray
-                    Alpha = 1
-                },
-                difficultyText = new SpriteText
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Font = new FontUsage("Inter", size: 24, weight: "Bold"),
-                    Colour = Colour4.White,
-                    Spacing = new Vector2(0.25f, 0), // 25% spacing
-                    Margin = new MarginPadding { Horizontal = 30, Vertical = 15 },
-                    Text = (beatmap.DifficultyName ?? "Unknown").ToUpperInvariant()
-                },
-                // Bottom border for selection indicator
-                selectionIndicator = new Container
-                {
-                    Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.BottomCentre,
-                    RelativeSizeAxes = Axes.X,
-                    Height = 4,
-                    Alpha = 0,
-                    Child = new Box
+                    AutoSizeAxes = Axes.Both,
+                    Masking = true,
+                    CornerRadius = 14,
+                    Children = new Drawable[]
                     {
-                        RelativeSizeAxes = Axes.Both,
-                        Colour = Colour4.White
+                        // Border box
+                        new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Colour = Colour4.FromHex("#1C1C1C"),
+                        },
+                        // Content container with inner background
+                        new Container
+                        {
+                            AutoSizeAxes = Axes.Both,
+                            Margin = new MarginPadding(2), // Border thickness
+                            Masking = true,
+                            CornerRadius = 12,
+                            Children = new Drawable[]
+                            {
+                                background = new Box
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Colour = Colour4.FromHex("#373737"),
+                                },
+                                difficultyText = new SpriteText
+                                {
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                    Font = new FontUsage("Inter-Bold", size: 18),
+                                    Colour = Colour4.White,
+                                    Spacing = new Vector2(0.25f, 0),
+                                    Margin = new MarginPadding { Horizontal = 30, Vertical = 8 },
+                                    Text = (beatmap.DifficultyName ?? "Unknown").ToUpperInvariant()
+                                }
+                            }
+                        }
                     }
                 }
             };
+        }
+
+        private Colour4 getStarRatingColour(double starRating)
+        {
+            // Based on HealthBar gradient colors (reversed)
+            // Every 2.5 star rating increase = new color
+            // 0-2.5 = Purple/Blue, 2.5-5.0 = Pink/Magenta, 5.0-7.5 = Orange, 7.5+ = Red
+            
+            if (starRating < 2.5)
+                return Colour4.FromHex("#6666DD"); // Purple/Blue
+            else if (starRating < 5.0)
+                return Colour4.FromHex("#CC6699"); // Pink/Magenta
+            else if (starRating < 7.5)
+                return Colour4.FromHex("#FF8033"); // Orange
+            else
+                return Colour4.FromHex("#FF3333"); // Red
         }
 
         private void updateSelectionState()
         {
             if (isSelected)
             {
-                background.FadeColour(Colour4.FromHex("#3C3C3C"), 200, Easing.OutQuint);
-                selectionIndicator.FadeIn(200, Easing.OutQuint);
+                // Use star rating-based color when selected
+                background.FadeColour(getStarRatingColour(beatmap.StarRating), 200, Easing.OutQuint);
             }
             else
             {
-                background.FadeColour(Colour4.FromHex("#2C2C2C"), 200, Easing.OutQuint);
-                selectionIndicator.FadeOut(200, Easing.OutQuint);
+                background.FadeColour(Colour4.FromHex("#373737"), 200, Easing.OutQuint);
             }
         }
 
         protected override bool OnHover(HoverEvent e)
         {
             if (!isSelected)
-                background.FadeColour(Colour4.FromHex("#3C3C3C"), 200, Easing.OutQuint);
+                background.FadeColour(Colour4.FromHex("#4C4C4C"), 200, Easing.OutQuint);
             
             this.ScaleTo(1.05f, 200, Easing.OutQuint);
             return base.OnHover(e);
@@ -99,7 +124,7 @@ namespace TypeBeat.Game.Ui
         protected override void OnHoverLost(HoverLostEvent e)
         {
             if (!isSelected)
-                background.FadeColour(Colour4.FromHex("#2C2C2C"), 200, Easing.OutQuint);
+                background.FadeColour(Colour4.FromHex("#373737"), 200, Easing.OutQuint);
             
             this.ScaleTo(1f, 200, Easing.OutQuint);
             base.OnHoverLost(e);

@@ -35,8 +35,6 @@ namespace TypeBeat.Game.Ui
         {
             Masking = true;
             CornerRadius = 30;
-            BorderThickness = 3;
-            BorderColour = Colour4.FromHex("#4A9EFF"); // Blue border like in Figma
 
             Children = new Drawable[]
             {
@@ -163,8 +161,8 @@ namespace TypeBeat.Game.Ui
                                             },
                                             difficultyBarFill = new Box
                                             {
-                                                RelativeSizeAxes = Axes.Y,
-                                                Width = 0, // Will be set based on star rating
+                                                RelativeSizeAxes = Axes.X | Axes.Y,
+                                                Width = 0, // Will be set based on star rating (0.0 to 1.0)
                                                 Colour = Colour4.White,
                                                 Alpha = 0
                                             }

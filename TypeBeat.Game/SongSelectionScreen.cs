@@ -19,7 +19,7 @@ namespace TypeBeat.Game
 {
     public partial class SongSelectionScreen : Screen
     {
-        private readonly BeatpackManager beatpackManager;
+        private readonly BeatpackManager beatpackManager; //
         private readonly Container backgroundContainer;
         private readonly MainScreen mainScreen;
         private readonly Track track;
@@ -53,9 +53,10 @@ namespace TypeBeat.Game
                     Name = "Logo Container",
                     Anchor = Anchor.TopLeft,
                     Origin = Anchor.TopLeft,
-                    Size = new Vector2(200, 60),
-                    Margin = new MarginPadding(30), // Use MARGIN instead of Padding
+                    Size = new Vector2(350, 105),
+                    Margin = new MarginPadding(30),
                     Depth = -1000,
+                    X = 60,
                     Child = new Sprite
                     {
                         Name = "Logo Sprite",
@@ -63,33 +64,36 @@ namespace TypeBeat.Game
                         Origin = Anchor.Centre,
                         RelativeSizeAxes = Axes.Both,
                         FillMode = FillMode.Fit,
-                        Texture = null // Will be loaded in load()
+                        Texture = null 
                     }
                 },
 
-                // TOP-RIGHT: HORIZONTAL DIFFICULTY CONTAINER
                 infoContainer = new Container
                 {
                     Name = "Info Container",
                     Anchor = Anchor.TopRight,
                     Origin = Anchor.TopRight,
                     RelativeSizeAxes = Axes.Both,
-                    Width = 0.7f, // 70% of screen width
-                    Height = 0.2f, // 20% of screen height
+                    Width = 0.45f, 
+                    Height = 0.07f, 
                     Margin = new MarginPadding(30),
                     Depth = -1000,
+                    X = -51.5f, Y = 25,
+                    Masking = true, // Enable masking for rounded corners
+                    CornerRadius = 25, // Rounded corners
+                    
                     Children = new Drawable[]
                     {
                         new Box
                         {
                             RelativeSizeAxes = Axes.Both,
                             Colour = Colour4.Black,
-                            Alpha = 0.6f
+                            Alpha = 0.5f
                         },
                         new Container
                         {
                             RelativeSizeAxes = Axes.Both,
-                            Padding = new MarginPadding(15),
+                            Padding = new MarginPadding { Horizontal = 8, Vertical = 2 },
                             Child = new BasicScrollContainer(Direction.Horizontal)
                             {
                                 RelativeSizeAxes = Axes.Both,
@@ -100,7 +104,7 @@ namespace TypeBeat.Game
                                     Name = "Difficulty List",
                                     RelativeSizeAxes = Axes.Y, // Fill height
                                     AutoSizeAxes = Axes.X, // Expand width based on content
-                                    Spacing = new Vector2(15, 0),
+                                    Spacing = new Vector2(8, 0),
                                     Direction = FillDirection.Horizontal
                                 }
                             }
@@ -114,13 +118,12 @@ namespace TypeBeat.Game
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     RelativeSizeAxes = Axes.Both,
-                    Height = 0.6f, // 70% of screen height
-                    Width = 0.9f,  // 70% of screen width
+                    Height = 0.6f,
+                    Width = 0.9f,
                     Y = -20,
-                    Depth = 0, // Default depth, behind logo and difficulty
+                    Depth = 0,
                 },
                 
-                // HORIZONTAL SONG LIST CONTAINER AT BOTTOM - TRANSPARENT
                 new Container
                 {
                     Name = "Song List Container",
@@ -382,7 +385,7 @@ namespace TypeBeat.Game
 
         private void updateDifficultyList(Beatpack beatpack)
         {
-            Logger.Log($"[updateDifficultyList] Starting update - showing ALL beatpacks as difficulties", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[updateDifficultyList] Starting update - showing beatmaps for selected beatpack: {beatpack?.Beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
             
             // Navigate through the structure: Info Container -> Box (skipped) -> Container (padding) -> BasicScrollContainer
             var paddingContainer = infoContainer.Children.OfType<Container>().FirstOrDefault();
@@ -404,16 +407,41 @@ namespace TypeBeat.Game
             if (selectedDifficultyButton != null)
                 selectedDifficultyButton.IsSelected = false;
 
-            // Show ALL beatpacks as difficulty options
-            foreach (var bp in beatpackManager.Beatpacks)
+            if (beatpack == null)
             {
-                if (bp?.Beatmap == null)
-                    continue;
+                Logger.Log("[updateDifficultyList] Beatpack is null!", LoggingTarget.Runtime, LogLevel.Error);
+                return;
+            }
 
-                Logger.Log($"[updateDifficultyList] Creating difficulty button for: {bp.Beatmap.DifficultyName} (★{bp.Beatmap.StarRating})", LoggingTarget.Runtime, LogLevel.Important);
+            // Get all beatmaps from the selected beatpack
+            var beatmapsToShow = new List<Beatmap>();
+            
+            // Add beatmaps from the Beatmaps list (if any)
+            if (beatpack.Beatmaps != null && beatpack.Beatmaps.Any())
+            {
+                beatmapsToShow.AddRange(beatpack.Beatmaps);
+            }
+            // Fallback to single Beatmap for backward compatibility
+            else if (beatpack.Beatmap != null)
+            {
+                beatmapsToShow.Add(beatpack.Beatmap);
+            }
+
+            if (!beatmapsToShow.Any())
+            {
+                Logger.Log("[updateDifficultyList] No beatmaps found in this beatpack!", LoggingTarget.Runtime, LogLevel.Error);
+                return;
+            }
+
+            Logger.Log($"[updateDifficultyList] Found {beatmapsToShow.Count} beatmap(s) in selected beatpack", LoggingTarget.Runtime, LogLevel.Important);
+
+            // Create difficulty buttons for each beatmap in the selected beatpack
+            foreach (var beatmap in beatmapsToShow)
+            {
+                Logger.Log($"[updateDifficultyList] Creating difficulty button for: {beatmap.DifficultyName} (★{beatmap.StarRating})", LoggingTarget.Runtime, LogLevel.Important);
                 
-                var diffButton = new DifficultyButton(bp.Beatmap);
-                diffButton.OnSelected += (beatmap) =>
+                var diffButton = new DifficultyButton(beatmap);
+                diffButton.OnSelected += (selectedBeatmap) =>
                 {
                     if (selectedDifficultyButton != null)
                         selectedDifficultyButton.IsSelected = false;
@@ -421,13 +449,13 @@ namespace TypeBeat.Game
                     selectedDifficultyButton = diffButton;
                     selectedDifficultyButton.IsSelected = true;
                     
-                    handleDifficultySelected(beatmap);
+                    handleDifficultySelected(selectedBeatmap);
                 };
                 
                 difficultyList.Add(diffButton);
                 
-                // Auto-select the currently selected beatpack's difficulty
-                if (bp == beatpack)
+                // Auto-select the first beatmap or the current one
+                if (selectedDifficultyButton == null || beatmap == beatpack.Beatmap)
                 {
                     selectedDifficultyButton = diffButton;
                     selectedDifficultyButton.IsSelected = true;
@@ -440,6 +468,16 @@ namespace TypeBeat.Game
         private void handleDifficultySelected(Beatmap selectedBeatmap)
         {
             Logger.Log($"Selected difficulty: {selectedBeatmap.DifficultyName} (★{selectedBeatmap.StarRating})", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Update the current beatpack's selected beatmap
+            if (beatpackManager.CurrentBeatpack.Value != null)
+            {
+                beatpackManager.CurrentBeatpack.Value.Beatmap = selectedBeatmap;
+                Logger.Log($"Updated current beatpack's active beatmap to: {selectedBeatmap.DifficultyName}", LoggingTarget.Runtime, LogLevel.Important);
+                
+                // Update the preview to show the new difficulty's info
+                beatpackPreview.ShowBeatpack(beatpackManager.CurrentBeatpack.Value);
+            }
         }
 
         private void startGame()
