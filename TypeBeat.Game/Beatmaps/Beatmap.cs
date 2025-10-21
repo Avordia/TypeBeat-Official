@@ -30,20 +30,25 @@ namespace TypeBeat.Game.Beatmaps
         public string DifficultyName { get; set; }
         public float StarRating { get; set; }
 
-        [JsonProperty("Gamemode")]
-        public string Gamemode { get; set; }
-        
-        [JsonProperty("BackgroundImage")]
-        public string BackgroundImage { get; set; }
+    [JsonProperty("Gamemode")]
+    public string Gamemode { get; set; }
 
-        [JsonProperty("Video")]
-        public string Video { get; set; }
+    [JsonProperty("Sounds")]
+    public string Sounds { get; set; }
 
-        [JsonProperty("MapData")]
-        public List<WordSegment> MapData { get; set; }
+    [JsonProperty("MusicKey")]
+    public string MusicKey { get; set; }
 
-        [JsonProperty("Audio")]
-        public string Audio { get; set; }
-        
+    [JsonProperty("BackgroundImage")]
+    public string BackgroundImage { get; set; }
+
+    [JsonProperty("Video")]
+    public string Video { get; set; }
+
+    [JsonProperty("MapData")]
+    public List<WordSegment> MapData { get; set; }
+
+    [JsonProperty("Audio")]
+    public string Audio { get; set; }
     }
 }
