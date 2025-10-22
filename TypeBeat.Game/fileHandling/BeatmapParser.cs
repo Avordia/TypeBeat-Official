@@ -4,6 +4,8 @@ using System.IO.Compression;
 using System.Linq;
 using Newtonsoft.Json;
 using TypeBeat.Game.Beatmaps;
+// Add this for logging
+using System.Diagnostics;
 
 namespace TypeBeat.Game.Filehandling
 {
@@ -11,6 +13,9 @@ namespace TypeBeat.Game.Filehandling
     {
         public static Beatpack ParseBeatpack(string filePath)
         {
+            // --- DEBUG LINE ---
+            Debug.WriteLine($"[BeatmapParser] Starting to parse beatpack: {Path.GetFileName(filePath)}");
+
             var beatpack = new Beatpack
             {
                 FilePath = filePath
@@ -20,28 +25,59 @@ namespace TypeBeat.Game.Filehandling
             {
                 using (var archive = ZipFile.OpenRead(filePath))
                 {
-                    var tbmdEntry = archive.Entries.FirstOrDefault(e => e.Name.EndsWith(".tbmd"));
-                    if (tbmdEntry is null)
-                        throw new FileNotFoundException($"Beatpack '{Path.GetFileName(filePath)}' does not contain a .tbmd file.");
+                    var tbmdEntries = archive.Entries.Where(e => e.Name.EndsWith(".tbmd")).ToList();
 
-                    using (var stream = tbmdEntry.Open())
-                    using (var reader = new StreamReader(stream))
+                    // --- DEBUG LINE ---
+                    Debug.WriteLine($"[BeatmapParser] Found {tbmdEntries.Count} beatmap file(s).");
+
+                    if (!tbmdEntries.Any())
+                        throw new FileNotFoundException($"Beatpack '{Path.GetFileName(filePath)}' does not contain any .tbmd files.");
+
+                    foreach (var tbmdEntry in tbmdEntries)
                     {
-                        string jsonContent = reader.ReadToEnd();
-                        
-                        try
+                        // --- DEBUG LINE ---
+                        Debug.WriteLine($"[BeatmapParser] --- Parsing entry: {tbmdEntry.FullName}");
+
+                        using (var stream = tbmdEntry.Open())
+                        using (var reader = new StreamReader(stream))
                         {
-                            beatpack.Beatmap = JsonConvert.DeserializeObject<Beatmap>(jsonContent);
-                        }
-                        catch (JsonException jsonEx)
-                        {
-                            throw new JsonException($"Invalid JSON in '{tbmdEntry.FullName}' from beatpack '{Path.GetFileName(filePath)}': {jsonEx.Message}", jsonEx);
+                            string jsonContent = reader.ReadToEnd();
+                            
+                            try
+                            {
+                                var beatmap = JsonConvert.DeserializeObject<Beatmap>(jsonContent);
+                                
+                                // --- DEBUG LINES ---
+                                if (beatmap != null)
+                                {
+                                    Debug.WriteLine($"[BeatmapParser] Successfully parsed beatmap:");
+                                    Debug.WriteLine($"[BeatmapParser]    Difficulty: {beatmap.DifficultyName}");
+                                    Debug.WriteLine($"[BeatmapParser]    Gamemode:   {beatmap.Gamemode}");
+                                }
+                                else
+                                {
+                                    Debug.WriteLine($"[BeatmapParser] Error: Parsed '{tbmdEntry.FullName}' but the beatmap object was null.");
+                                }
+                                // ---
+
+                                beatpack.Beatmaps.Add(beatmap);
+                            }
+                            catch (JsonException jsonEx)
+                            {
+                                // --- DEBUG LINE ---
+                                Debug.WriteLine($"[BeatmapParser] JSON Error parsing '{tbmdEntry.FullName}': {jsonEx.Message}");
+                                throw new JsonException($"Invalid JSON in '{tbmdEntry.FullName}' from beatpack '{Path.GetFileName(filePath)}': {jsonEx.Message}", jsonEx);
+                            }
                         }
                     }
 
-                    // Make audio optional by not throwing an error if it's missing.
+                    beatpack.Beatmap = beatpack.Beatmaps.FirstOrDefault();
+
+                    // --- DEBUG LINE ---
+                    Debug.WriteLine($"[BeatmapParser] Finished parsing. Total beatmaps loaded: {beatpack.Beatmaps.Count}");
+
                     var musicEntry = archive.Entries.FirstOrDefault(e => e.Name.Equals("audio.ogg", StringComparison.OrdinalIgnoreCase));
-                    beatpack.MusicPath = musicEntry?.Name; // This will be null if not found, which is now acceptable.
+                    beatpack.MusicPath = musicEntry?.Name; 
 
                     var backgroundEntry = archive.Entries.FirstOrDefault(e =>
                         e.Name.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
@@ -57,6 +93,8 @@ namespace TypeBeat.Game.Filehandling
             }
             catch (InvalidDataException zipEx)
             {
+                // --- DEBUG LINE ---
+                Debug.WriteLine($"[BeatmapParser] ZIP Error for '{Path.GetFileName(filePath)}': {zipEx.Message}");
                 throw new InvalidDataException($"Failed to open ZIP archive '{Path.GetFileName(filePath)}': File may be corrupted or not a valid ZIP file.", zipEx);
             }
 

@@ -3,6 +3,7 @@ using System.Linq;
 using TypeBeat.Game.Beatmaps;
 using TypeBeat.Game.Gameplay.Judgement;
 using TypeBeat.Game.Gameplay.Typing;
+#nullable enable
 
 namespace TypeBeat.Game.Gameplay.Input
 {

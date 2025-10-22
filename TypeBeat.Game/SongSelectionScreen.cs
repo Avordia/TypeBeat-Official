@@ -28,11 +28,14 @@ namespace TypeBeat.Game
         private BeatpackPreview beatpackPreview;
         private SongThumbnail selectedThumbnail;
         private DifficultyButton selectedDifficultyButton;
-        private Container logoContainer;
+    private LogoClickableContainer logoContainer;
         private Container infoContainer;
         private BasicScrollContainer songThumbnailList;
 
-        public SongSelectionScreen(BeatpackManager beatpackManager, Container backgroundContainer, MainScreen mainScreen, Track track)
+    private string currentGamemode = "TypeBeat"; // Default gamemode
+    private TextureStore textures;
+
+    public SongSelectionScreen(BeatpackManager beatpackManager, Container backgroundContainer, MainScreen mainScreen, Track track)
         {
             this.beatpackManager = beatpackManager;
             this.backgroundContainer = backgroundContainer;
@@ -47,8 +50,8 @@ namespace TypeBeat.Game
                     Name = "Background Layer"
                 },
 
-                // TOP-LEFT: TypeBeat Logo with Text
-                logoContainer = new Container
+                // TOP-LEFT: TypeBeat Logo with Text (Clickable, Hoverable)
+                logoContainer = new LogoClickableContainer
                 {
                     Name = "Logo Container",
                     Anchor = Anchor.TopLeft,
@@ -57,6 +60,20 @@ namespace TypeBeat.Game
                     Margin = new MarginPadding(30),
                     Depth = -1000,
                     X = 60,
+                    Action = () =>
+                    {
+                        // Toggle gamemode
+                        if (currentGamemode == "TypeBeat")
+                            currentGamemode = "TypeNote";
+                        else
+                            currentGamemode = "TypeBeat";
+
+                        updateLogoTexture();
+
+                        // Only update the difficulty container
+                        if (beatpackManager.CurrentBeatpack.Value != null)
+                            updateDifficultyList(beatpackManager.CurrentBeatpack.Value);
+                    },
                     Child = new Sprite
                     {
                         Name = "Logo Sprite",
@@ -64,7 +81,7 @@ namespace TypeBeat.Game
                         Origin = Anchor.Centre,
                         RelativeSizeAxes = Axes.Both,
                         FillMode = FillMode.Fit,
-                        Texture = null 
+                        Texture = null
                     }
                 },
 
@@ -299,21 +316,8 @@ namespace TypeBeat.Game
         [BackgroundDependencyLoader]
         private void load(TextureStore textures)
         {
-            // Load the TypeBeat logo texture directly
-            var logoSprite = logoContainer.Child as Sprite;
-            if (logoSprite != null)
-            {
-                var texture = textures.Get("images/logo/LogoWithText");
-                if (texture != null)
-                {
-                    logoSprite.Texture = texture;
-                    Logger.Log("[SongSelection] Logo texture loaded successfully", LoggingTarget.Runtime, LogLevel.Important);
-                }
-                else
-                {
-                    Logger.Log("[SongSelection] ERROR: Logo texture not found at 'images/logo/LogoWithText'", LoggingTarget.Runtime, LogLevel.Error);
-                }
-            }
+            this.textures = textures;
+            updateLogoTexture();
 
             // Wire up the play button in BeatpackPreview
             beatpackPreview.SetPlayButtonAction(() => startGame());
@@ -352,6 +356,16 @@ namespace TypeBeat.Game
                 }
             }
         }
+
+        private void updateLogoTexture()
+        {
+            if (logoContainer?.Child is Sprite logoSprite && textures != null)
+            {
+                string texPath = currentGamemode == "TypeBeat" ? "images/logo/LogoWithText" : "images/logo/TypeNoteLogo";
+                var texture = textures.Get(texPath);
+                logoSprite.Texture = texture;
+            }
+        }
         
         private void handleSongSelected(Beatpack selectedBeatpack)
         {
@@ -386,13 +400,13 @@ namespace TypeBeat.Game
         private void updateDifficultyList(Beatpack beatpack)
         {
             Logger.Log($"[updateDifficultyList] Starting update - showing beatmaps for selected beatpack: {beatpack?.Beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
-            
+
             // Navigate through the structure: Info Container -> Box (skipped) -> Container (padding) -> BasicScrollContainer
             var paddingContainer = infoContainer.Children.OfType<Container>().FirstOrDefault();
             var scrollContainer = paddingContainer?.Children.OfType<BasicScrollContainer>().FirstOrDefault();
-            
+
             Logger.Log($"[updateDifficultyList] Scroll Container found: {scrollContainer != null}", LoggingTarget.Runtime, LogLevel.Important);
-            
+
             if (scrollContainer == null)
             {
                 Logger.Log("Could not find scroll container - difficulty list cannot be updated", LoggingTarget.Runtime, LogLevel.Error);
@@ -401,7 +415,7 @@ namespace TypeBeat.Game
 
             var difficultyList = (FillFlowContainer)scrollContainer.Child;
             Logger.Log($"[updateDifficultyList] Difficulty List found, clearing {difficultyList.Children.Count()} existing items", LoggingTarget.Runtime, LogLevel.Important);
-            
+
             difficultyList.Clear();
 
             if (selectedDifficultyButton != null)
@@ -415,7 +429,7 @@ namespace TypeBeat.Game
 
             // Get all beatmaps from the selected beatpack
             var beatmapsToShow = new List<Beatmap>();
-            
+
             // Add beatmaps from the Beatmaps list (if any)
             if (beatpack.Beatmaps != null && beatpack.Beatmaps.Any())
             {
@@ -435,25 +449,48 @@ namespace TypeBeat.Game
 
             Logger.Log($"[updateDifficultyList] Found {beatmapsToShow.Count} beatmap(s) in selected beatpack", LoggingTarget.Runtime, LogLevel.Important);
 
-            // Create difficulty buttons for each beatmap in the selected beatpack
-            foreach (var beatmap in beatmapsToShow)
+            // Filter beatmaps by current gamemode
+            string filterGamemode = currentGamemode;
+            var filtered = beatmapsToShow.Where(b =>
+                (string.IsNullOrEmpty(b.Gamemode) && filterGamemode == "TypeBeat") ||
+                (b.Gamemode?.Equals(filterGamemode, System.StringComparison.OrdinalIgnoreCase) ?? false)
+            ).ToList();
+
+            if (!filtered.Any())
+            {
+                // Show message if no beatmaps for this gamemode
+                difficultyList.Add(new SpriteText
+                {
+                    Text = $"No {filterGamemode} Beatmap found for this beatpack.",
+                    Colour = Colour4.Red,
+                    Font = FontUsage.Default.With(size: 28, weight: "Bold"),
+                    Anchor = Anchor.CentreLeft,
+                    Origin = Anchor.CentreLeft,
+                    Padding = new MarginPadding { Left = 10 }
+                });
+                Logger.Log($"[updateDifficultyList] No {filterGamemode} beatmaps found.", LoggingTarget.Runtime, LogLevel.Important);
+                return;
+            }
+
+            // Create difficulty buttons for each filtered beatmap
+            foreach (var beatmap in filtered)
             {
                 Logger.Log($"[updateDifficultyList] Creating difficulty button for: {beatmap.DifficultyName} (★{beatmap.StarRating})", LoggingTarget.Runtime, LogLevel.Important);
-                
+
                 var diffButton = new DifficultyButton(beatmap);
                 diffButton.OnSelected += (selectedBeatmap) =>
                 {
                     if (selectedDifficultyButton != null)
                         selectedDifficultyButton.IsSelected = false;
-                    
+
                     selectedDifficultyButton = diffButton;
                     selectedDifficultyButton.IsSelected = true;
-                    
+
                     handleDifficultySelected(selectedBeatmap);
                 };
-                
+
                 difficultyList.Add(diffButton);
-                
+
                 // Auto-select the first beatmap or the current one
                 if (selectedDifficultyButton == null || beatmap == beatpack.Beatmap)
                 {
@@ -461,9 +498,27 @@ namespace TypeBeat.Game
                     selectedDifficultyButton.IsSelected = true;
                 }
             }
-            
+
             Logger.Log($"[updateDifficultyList] ✓ Successfully added {difficultyList.Children.Count()} difficulty buttons", LoggingTarget.Runtime, LogLevel.Important);
         }
+    // Subclass for clickable, hoverable logo
+    public class LogoClickableContainer : ClickableContainer
+    {
+        private const float hoverScale = 1.1f;
+        private const float animDuration = 120;
+
+        protected override bool OnHover(osu.Framework.Input.Events.HoverEvent e)
+        {
+            this.ScaleTo(hoverScale, animDuration, Easing.OutQuint);
+            return base.OnHover(e);
+        }
+
+        protected override void OnHoverLost(osu.Framework.Input.Events.HoverLostEvent e)
+        {
+            this.ScaleTo(1f, animDuration, Easing.OutQuint);
+            base.OnHoverLost(e);
+        }
+    }
 
         private void handleDifficultySelected(Beatmap selectedBeatmap)
         {

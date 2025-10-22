@@ -1,12 +1,9 @@
 using osu.Framework.Audio.Track;
 using osu.Framework.Bindables;
+#nullable enable
 
 namespace TypeBeat.Game.Gameplay.Timing
 {
-    /// <summary>
-    /// Thin wrapper around an osu!Framework Track providing a single source of gameplay time
-    /// and an optional latency offset for calibration.
-    /// </summary>
     public class Conductor
     {
         public Track? Track { get; private set; }

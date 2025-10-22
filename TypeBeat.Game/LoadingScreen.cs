@@ -144,19 +144,27 @@ namespace TypeBeat.Game
 
         private void simulateLoading()
         {
-            // Wait for loading animation to complete, then transition to game
             Scheduler.AddDelayed(() =>
             {
                 if (progress >= 0.99f)
                 {
-                    // Create and push the game screen
-                    var gameScreen = new GameScreen(beatpack, beatmap);
+                    
+                    Screen gameScreen;
+                    
+                    if (beatmap.Gamemode != null && beatmap.Gamemode.Equals("TypeNote", StringComparison.OrdinalIgnoreCase))
+                    {
+                        gameScreen = new GameScreenTN(beatpack, beatmap);
+                    }
+                    else
+                    {
+                        gameScreen = new GameScreen(beatpack, beatmap);
+                    }
+                    
                     this.Push(gameScreen);
                     
-                    // Immediately exit the loading screen so GameScreen → SongSelection instead of GameScreen → LoadingScreen → SongSelection
                     Schedule(() => this.Exit());
                 }
-            }, 2100); // Slightly longer than animation
+            }, 2100); 
         }
     }
 }

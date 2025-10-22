@@ -1,0 +1,116 @@
+using System;
+using osu.Framework.Logging;
+using TypeBeat.Game.Gameplay.Judgement;
+
+namespace TypeBeat.Game.Gameplay.Input
+{
+    public class NoteManager
+    {
+        private Beatmaps.Note[] allNotes = System.Array.Empty<Beatmaps.Note>();
+        private int currentNoteIndex = 0;
+
+        public void SetSegment(Beatmaps.WordSegment segment)
+        {
+            if (segment?.Notes == null)
+            {
+                allNotes = System.Array.Empty<Beatmaps.Note>();
+                Logger.Log("[NoteQueueManager] Segment is null or has no notes.", LoggingTarget.Runtime, LogLevel.Error);
+            }
+            else
+            {
+                allNotes = segment.Notes.ToArray();
+                Logger.Log($"[NoteQueueManager] Loaded new segment with {allNotes.Length} notes.", LoggingTarget.Runtime, LogLevel.Important);
+            }
+            
+            currentNoteIndex = 0;
+        }
+
+        // --- UPDATED METHOD ---
+        public ResultingJudgement HandleNotePress(string inputNote, double currentTime, HitWindows hitWindows)
+        {
+            if (currentNoteIndex >= allNotes.Length)
+            {
+                // No notes left to hit
+                return new ResultingJudgement(JudgementType.Miss, false, false, 0);
+            }
+
+            var currentNote = allNotes[currentNoteIndex];
+
+            // 1. Define the "active window" (like in TypingManager)
+            // A key press is only considered if it's between the note's spawn and its miss window.
+            // We use EndTime for the late boundary because that's the arrival/judgement time.
+            double earlyBoundary = currentNote.StartTime;
+            double lateBoundary = currentNote.EndTime + hitWindows.Window50;
+
+            if (currentTime < earlyBoundary || currentTime > lateBoundary)
+            {
+                // Key press is completely outside the note's lifetime.
+                // Not consumed, no judgement.
+                return new ResultingJudgement(JudgementType.Miss, false, false, 0);
+            }
+
+            // 2. The key press is "active". Now, judge it.
+            // The judgement offset MUST be relative to the ARRIVAL time (EndTime).
+            double timeOffset = currentTime - currentNote.EndTime;
+
+            if (string.Equals(inputNote, currentNote.Character, StringComparison.OrdinalIgnoreCase))
+            {
+                // CORRECT note
+                var judgement = hitWindows.Judge(timeOffset); // Judge based on EndTime offset
+
+                currentNoteIndex++;
+                bool segmentCompleted = currentNoteIndex >= allNotes.Length;
+
+                // Return Consumed = true
+                return new ResultingJudgement(judgement, true, segmentCompleted, timeOffset);
+            }
+            else
+            {
+                // WRONG note
+                currentNoteIndex++;
+                bool segmentCompleted = currentNoteIndex >= allNotes.Length;
+                
+                Logger.Log($"[NoteQueueManager] Wrong note! Expected: {currentNote.Character}, Got: {inputNote}", LoggingTarget.Runtime, LogLevel.Debug);
+                
+                // It's a "Miss", but it was still "Consumed" (it used up the note).
+                // Return Consumed = true
+                return new ResultingJudgement(JudgementType.Miss, true, segmentCompleted, 0);
+            }
+        }
+
+        public int AutoConsumeMisses(double currentTime, HitWindows hitWindows, out bool segmentCompleted)
+        {
+            segmentCompleted = false;
+            int missedCount = 0;
+
+            if (currentNoteIndex >= allNotes.Length)
+            {
+                segmentCompleted = true; 
+                return 0;
+            }
+
+            var currentNote = allNotes[currentNoteIndex];
+            
+            // --- FIX ---
+            // A note is missed if we are past its EndTime + the miss window
+            double missTime = currentNote.EndTime + hitWindows.Window50; 
+
+            while (currentTime > missTime)
+            {
+                missedCount++;
+                currentNoteIndex++;
+
+                if (currentNoteIndex >= allNotes.Length)
+                {
+                    segmentCompleted = true;
+                    return missedCount;
+                }
+                
+                currentNote = allNotes[currentNoteIndex];
+                missTime = currentNote.EndTime + hitWindows.Window50; // Use EndTime here too
+            }
+
+            return missedCount;
+        }
+    }
+}
