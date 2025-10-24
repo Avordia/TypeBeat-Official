@@ -16,7 +16,7 @@ namespace TypeBeat.Game.Ui
         private const float ExpandDuration = 300;
         public event System.Action<bool> OnExpandStateChanged;
 
-        public HoverableFooter(float defaultHeight = 35, float expandedHeight = 60)
+        public HoverableFooter(System.Action onLoginRequested, float defaultHeight = 35, float expandedHeight = 60) : base(onLoginRequested)
         {
             this.defaultHeight = defaultHeight;
             this.expandedHeight = expandedHeight;

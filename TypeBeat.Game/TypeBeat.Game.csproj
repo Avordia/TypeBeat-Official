@@ -8,5 +8,9 @@
   <ItemGroup>
     <PackageReference Include="ppy.osu.Framework" Version="2025.1008.0" />
     <PackageReference Include="ppy.osu.Game.Resources" Version="2025.1006.0" />
+    <PackageReference Include="supabase-csharp" Version="0.16.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Configuration\appsettings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

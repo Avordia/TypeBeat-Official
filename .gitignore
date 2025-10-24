@@ -50,3 +50,6 @@ ehthumbs.db
 *.env
 secrets.json
 appsettings.Development.json
+appsettings.json
+appsettings.*.json
+Secrets/

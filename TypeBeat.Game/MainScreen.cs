@@ -22,6 +22,7 @@ using osuTK.Graphics;
 using TypeBeat.Game.Beatmaps;
 using TypeBeat.Game.Filehandling;
 using TypeBeat.Game.Ui;
+using TypeBeat.Game.Online;
 
 namespace TypeBeat.Game
 {
@@ -39,6 +40,7 @@ namespace TypeBeat.Game
         private MenuPlayer menuPlayer;
         private Header header;
         private Footer footer;
+        private LoginOverlay loginOverlay;
         
         private bool isInMenuMode;
         private bool isMenuTransitioning;
@@ -50,7 +52,7 @@ namespace TypeBeat.Game
         private const float footer_peek_y = 8f;
 
         [BackgroundDependencyLoader]
-        private void load(GameHost host, AudioManager audio, TextureStore textures)
+        private void load(GameHost host, AudioManager audio, TextureStore textures, AuthenticationService authService)
         {
             this.host = host;
             audioManager = audio;
@@ -65,12 +67,17 @@ namespace TypeBeat.Game
                     Y = header_peek_y,
                     Alpha = 0,
                 },
-                footer = new Footer
+                footer = new Footer(() => loginOverlay.Show())
                 {
                     Anchor = Anchor.BottomCentre,
                     Origin = Anchor.BottomCentre,
                     Y = footer_peek_y,
                     Alpha = 0,
+                },
+                loginOverlay = new LoginOverlay(authService)
+                {
+                    Depth = float.MinValue + 1,
+                    Alpha = 0
                 },
                 new Container
                 {

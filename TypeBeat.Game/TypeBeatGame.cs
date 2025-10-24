@@ -3,8 +3,10 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.IO.Stores;
+using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
+using TypeBeat.Game.Online;
 using TypeBeat.Resources;
 
 namespace TypeBeat.Game
@@ -13,6 +15,16 @@ namespace TypeBeat.Game
     {
         private ScreenStack screenStack;
         private Storage gameStorage;
+
+        protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
+        {
+            var dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
+            
+            // Register authentication service for dependency injection
+            dependencies.Cache(new AuthenticationService());
+            
+            return dependencies;
+        }
 
         [BackgroundDependencyLoader]
         private void load(GameHost host)
@@ -28,9 +40,20 @@ namespace TypeBeat.Game
             Child = screenStack = new ScreenStack { RelativeSizeAxes = Axes.Both };
         }
 
-        protected override void LoadComplete()
+        protected override async void LoadComplete()
         {
             base.LoadComplete();
+            
+            // Initialize backend client
+            try
+            {
+                await BackendClient.InitializeAsync();
+            }
+            catch (System.Exception ex)
+            {
+                Logger.Log($"Failed to initialize backend client: {ex.Message}", LoggingTarget.Runtime, LogLevel.Error);
+            }
+            
             performFirstRunImport();
             screenStack.Push(new MainScreen());
         }
