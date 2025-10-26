@@ -1,4 +1,35 @@
-Typing Rhytmn Game
+# TypeBeat
+
+A typing rhythm game built with osu!framework featuring auto-update functionality.
+
+## Installation
+
+### For End Users
+
+Download `TypeBeatSetup.exe` from the [Releases](https://github.com/YourUsername/TypeBeat/releases) page and run the installer. The game will automatically check for updates when launched.
+
+### For Developers
+
+```bash
+# Clone and build
+git clone https://github.com/YourUsername/TypeBeat.git
+cd TypeBeat
+dotnet restore
+dotnet build
+dotnet run --project TypeBeat.Desktop
+```
+
+See [QUICKSTART.md](QUICKSTART.md) for detailed build instructions.
+
+## Creating Releases
+
+Build an installable package with auto-update support:
+
+```powershell
+.\build-release.ps1 -Version "1.0.0"
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide.
 
 ## Configuration
 

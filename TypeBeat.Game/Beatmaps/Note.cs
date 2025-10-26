@@ -12,5 +12,8 @@ namespace TypeBeat.Game.Beatmaps
 
         [JsonProperty("EndTime")]
         public double EndTime { get; set; }
+        
+        [JsonProperty("Row")]
+        public int Row { get; set; }
     }
 }

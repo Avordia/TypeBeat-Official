@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Textures;
@@ -7,6 +7,9 @@ using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
 using TypeBeat.Game.Online;
+using TypeBeat.Game.Editor;
+using TypeBeat.Game.Updates;
+using TypeBeat.Game.Overlays;
 using TypeBeat.Resources;
 
 namespace TypeBeat.Game
@@ -15,6 +18,9 @@ namespace TypeBeat.Game
     {
         private ScreenStack screenStack;
         private Storage gameStorage;
+        private LocalBeatpackManager beatpackManager;
+        private UpdateManager updateManager;
+        private UpdateNotificationOverlay updateNotification;
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
         {
@@ -22,6 +28,12 @@ namespace TypeBeat.Game
             
             // Register authentication service for dependency injection
             dependencies.Cache(new AuthenticationService());
+            
+            // Register local beatpack manager for dependency injection
+            dependencies.Cache(beatpackManager = new LocalBeatpackManager());
+            
+            // Register update manager for dependency injection
+            dependencies.Cache(updateManager = new UpdateManager());
             
             return dependencies;
         }
@@ -37,7 +49,13 @@ namespace TypeBeat.Game
             Fonts.AddStore(fontStore);
 
             gameStorage = host.Storage;
-            Child = screenStack = new ScreenStack { RelativeSizeAxes = Axes.Both };
+            
+            Children = new Drawable[]
+            {
+                beatpackManager,
+                screenStack = new ScreenStack { RelativeSizeAxes = Axes.Both },
+                updateNotification = new UpdateNotificationOverlay()
+            };
         }
 
         protected override async void LoadComplete()
@@ -56,6 +74,9 @@ namespace TypeBeat.Game
             
             performFirstRunImport();
             screenStack.Push(new MainScreen());
+            
+            // Check for updates after initialization
+            checkForUpdates();
         }
     
         private void performFirstRunImport()
@@ -73,6 +94,27 @@ namespace TypeBeat.Game
                 {
                     stream.CopyTo(writeStream);
                 }
+            }
+
+            Storage editorStorage = gameStorage.GetStorageForDirectory("EditorProjects");
+            Logger.Log($"EditorProjects directory initialized at: {editorStorage.GetFullPath(string.Empty)}", LoggingTarget.Runtime, LogLevel.Debug);
+        }
+        
+        private async void checkForUpdates()
+        {
+            try
+            {
+                Logger.Log("Checking for updates...", LoggingTarget.Runtime, LogLevel.Debug);
+                var updateInfo = await updateManager.CheckForUpdatesAsync();
+                
+                if (updateInfo != null)
+                {
+                    Schedule(() => updateNotification.ShowUpdateNotification());
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Logger.Log($"Update check failed: {ex.Message}", LoggingTarget.Runtime, LogLevel.Error);
             }
         }
     }

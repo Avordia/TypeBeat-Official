@@ -23,6 +23,7 @@ using TypeBeat.Game.Beatmaps;
 using TypeBeat.Game.Filehandling;
 using TypeBeat.Game.Ui;
 using TypeBeat.Game.Online;
+using TypeBeat.Game.Editor;
 
 namespace TypeBeat.Game
 {
@@ -41,6 +42,7 @@ namespace TypeBeat.Game
         private Header header;
         private Footer footer;
         private LoginOverlay loginOverlay;
+        private AuthenticationService authService;
         
         private bool isInMenuMode;
         private bool isMenuTransitioning;
@@ -56,6 +58,7 @@ namespace TypeBeat.Game
         {
             this.host = host;
             audioManager = audio;
+            this.authService = authService;
             InternalChildren = new Drawable[]
             {
                 beatpackManager = new BeatpackManager(),
@@ -116,7 +119,34 @@ namespace TypeBeat.Game
                         {
                             Y = 60,
                             AutoSizeAxes = Axes.Both,
-                            Child = new MenuButton("Create", Colour4.YellowGreen, 15f, dimensions: new Vector2(200, 50))
+                            Child = new MenuButton("Create", Colour4.YellowGreen, 15f, dimensions: new Vector2(200, 50), onClick: () => 
+                            {
+                                // Check if user is logged in
+                                if (!authService.IsLoggedIn)
+                                {
+                                    loginOverlay.Show();
+                                    return;
+                                }
+
+                                // Stop the music before transitioning
+                                track?.Stop();
+                                shouldAutoPlayTrack = false;
+
+                                // Fade out UI elements
+                                mainLogo.FadeOut(400);
+                                songTitleText.FadeOut(400);
+                                menuPlayer.FadeOut(400);
+                                frameworkCredit.FadeOut(400);
+
+                                var menuButtonsContainer = InternalChildren.OfType<Container>().FirstOrDefault(c => c.Name == "Menu Buttons");
+                                menuButtonsContainer?.FadeOut(400);
+
+                                this.Delay(400).Schedule(() =>
+                                {
+                                    // Navigate to editor dashboard
+                                    this.Push(new EditDashboardScreen());
+                                });
+                            })
                         },
                         new Container
                         {
@@ -307,54 +337,87 @@ namespace TypeBeat.Game
         {
             base.OnResuming(e);
             
-            // Re-enable auto-play when returning to MainScreen
-            shouldAutoPlayTrack = true;
-            
-            Logger.Log($"[MainScreen] OnResuming called", LoggingTarget.Runtime, LogLevel.Important);
-            Logger.Log($"[MainScreen] backgroundContainer.Parent = {backgroundContainer?.Parent?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
-            Logger.Log($"[MainScreen] backgroundContainer.Child = {backgroundContainer?.Child?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
-            Logger.Log($"[MainScreen] isInMenuMode = {isInMenuMode}", LoggingTarget.Runtime, LogLevel.Important);
-            
-            
-            mainLogo.FadeIn(300);
-            songTitleText.FadeIn(300);
-            menuPlayer.FadeIn(300);
-            
-            if (isInMenuMode)
+            if (e.Last is EditDashboardScreen)
             {
-                header.FadeIn(200);
-                footer.FadeIn(200);
-                header.MoveToY(0, 0);
-                footer.MoveToY(0, 0);
-            }
-            else
-            {
+                // Reset to initial main screen state when returning from editor
+                isInMenuMode = false;
+                shouldAutoPlayTrack = true;
+                
+                mainLogo.FadeIn(300);
+                songTitleText.FadeIn(300);
+                menuPlayer.FadeIn(300);
+                frameworkCredit.FadeIn(300);
+                
                 header.FadeOut(0);
                 footer.FadeOut(0);
                 header.MoveToY(header_peek_y, 0);
                 footer.MoveToY(footer_peek_y, 0);
-            }
-            
-            track?.Start();
-            
-            if (backgroundContainer?.Child is Video video)
-            {
-                Logger.Log($"[MainScreen] Found video in OnResuming. Loop = {video.Loop}, IsAlive = {video.IsAlive}", LoggingTarget.Runtime, LogLevel.Important);
-
-                video.Loop = true;
+                
+                var menuButtonsContainer = InternalChildren.OfType<Container>().FirstOrDefault(c => c.Name == "Menu Buttons");
+                menuButtonsContainer?.FadeOut(0);
+                
+                var centerContainer = mainLogo.Parent?.Parent as Container;
+                centerContainer?.MoveToX(0, 0);
+                
+                // Restart the music
+                track?.Start();
             }
             else
             {
-                Logger.Log($"[MainScreen] No video found in OnResuming!", LoggingTarget.Runtime, LogLevel.Important);
+                // Re-enable auto-play when returning to MainScreen
+                shouldAutoPlayTrack = true;
+                
+                Logger.Log($"[MainScreen] OnResuming called", LoggingTarget.Runtime, LogLevel.Important);
+                Logger.Log($"[MainScreen] backgroundContainer.Parent = {backgroundContainer?.Parent?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
+                Logger.Log($"[MainScreen] backgroundContainer.Child = {backgroundContainer?.Child?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
+                Logger.Log($"[MainScreen] isInMenuMode = {isInMenuMode}", LoggingTarget.Runtime, LogLevel.Important);
+                
+                
+                mainLogo.FadeIn(300);
+                songTitleText.FadeIn(300);
+                menuPlayer.FadeIn(300);
+                
+                if (isInMenuMode)
+                {
+                    header.FadeIn(200);
+                    footer.FadeIn(200);
+                    header.MoveToY(0, 0);
+                    footer.MoveToY(0, 0);
+                }
+                else
+                {
+                    header.FadeOut(0);
+                    footer.FadeOut(0);
+                    header.MoveToY(header_peek_y, 0);
+                    footer.MoveToY(footer_peek_y, 0);
+                }
+                
+                track?.Start();
+                
+                if (backgroundContainer?.Child is Video video)
+                {
+                    Logger.Log($"[MainScreen] Found video in OnResuming. Loop = {video.Loop}, IsAlive = {video.IsAlive}", LoggingTarget.Runtime, LogLevel.Important);
+
+                    video.Loop = true;
+                }
+                else
+                {
+                    Logger.Log($"[MainScreen] No video found in OnResuming!", LoggingTarget.Runtime, LogLevel.Important);
+                }
+                
+                var menuButtonsContainer = InternalChildren.OfType<Container>().FirstOrDefault(c => c.Name == "Menu Buttons");
+                if (menuButtonsContainer != null && isInMenuMode)
+                {
+                    menuButtonsContainer.FadeIn(300);
+                }            
+                if (!isInMenuMode)
+                    toggleMenuMode();
             }
             
-            var menuButtonsContainer = InternalChildren.OfType<Container>().FirstOrDefault(c => c.Name == "Menu Buttons");
-            if (menuButtonsContainer != null && isInMenuMode)
-            {
-                menuButtonsContainer.FadeIn(300);
-            }            
-            if (!isInMenuMode)
-                toggleMenuMode();
+            // Re-enable auto-play when returning to MainScreen
+            shouldAutoPlayTrack = true;
+            
+            track?.Start();
         }
 
         public override bool OnExiting(ScreenExitEvent e)
