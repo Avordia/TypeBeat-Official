@@ -49,7 +49,7 @@ namespace TypeBeat.Game.Configuration
             
             // For now, return null to disable updates in development
             // Change this before releasing!
-            return "https://github.com/Avordia/TypeBeat/releases";
+            return "https://github.com/Avordia/TypeBeat-Official/releases";
         }
     }
 }
