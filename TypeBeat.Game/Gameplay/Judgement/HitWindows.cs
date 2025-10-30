@@ -14,13 +14,14 @@ namespace TypeBeat.Game.Gameplay.Judgement
     public class HitWindows
     {
         // Default thresholds (two-sided): |offset| <= threshold => corresponding judgement
-        // 300: 32ms, 200: 64ms, 100: 96ms, 50: 140ms
+        // Very lenient timing windows for better player experience
+        // 300: 120ms, 200: 160ms, 100: 200ms, 50: 240ms
         public int Window300 { get; }
         public int Window200 { get; }
         public int Window100 { get; }
         public int Window50  { get; }
 
-        public HitWindows(int window300 = 32, int window200 = 64, int window100 = 96, int window50 = 140)
+        public HitWindows(int window300 = 120, int window200 = 160, int window100 = 200, int window50 = 240)
         {
             if (window300 <= 0 || window200 <= 0 || window100 <= 0 || window50 <= 0)
                 throw new ArgumentOutOfRangeException("Hit windows must be positive.");

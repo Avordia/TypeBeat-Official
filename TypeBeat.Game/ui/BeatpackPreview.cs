@@ -76,7 +76,7 @@ namespace TypeBeat.Game.Ui
                             {
                                 Anchor = Anchor.TopRight,
                                 Origin = Anchor.TopRight,
-                                Font = new FontUsage("Inter", size: 42, weight: "Bold"),
+                                Font = new FontUsage("Inter", size: 56, weight: "Bold"),
                                 Colour = Colour4.White,
                                 Spacing = new Vector2(0.5f, 0), // 50% spacing
                                 Alpha = 0

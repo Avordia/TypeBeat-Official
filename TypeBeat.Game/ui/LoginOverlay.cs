@@ -61,7 +61,7 @@ namespace TypeBeat.Game.Ui
                         {
                             Anchor = Anchor.TopLeft,
                             Origin = Anchor.BottomLeft,
-                            Y = -5,
+                            Y = 15,
                             Size = new Vector2(600, 50),
                             Children = new Drawable[]
                             {
@@ -95,7 +95,7 @@ namespace TypeBeat.Game.Ui
                                 },
                                 registerTab = new Container
                                 {
-                                    X = 260,
+                                    X = 200,
                                     Size = new Vector2(250, 50),
                                     Masking = true,
                                     CornerRadius = 15f,

@@ -6,6 +6,7 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Track;
+using osu.Framework.Audio.Sample;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Rendering;
@@ -22,9 +23,12 @@ using TypeBeat.Game.Beatmaps;
 using TypeBeat.Game.Ui;
 using TypeBeat.Game.Gameplay.Judgement;
 using TypeBeat.Game.Gameplay.Input;
+using TypeBeat.Game.Online;
 using TypeBeat.Game.Gameplay.Layout;
 using TypeBeat.Game.Gameplay.Appearance;
 using TypeBeat.Game.Gameplay.Scheduling;
+using TypeBeat.Game.Gameplay.Typing;
+using TypeBeat.Game.Gameplay.Objects;
 using TypeBeat.Game.Filehandling;
 
 namespace TypeBeat.Game
@@ -42,15 +46,17 @@ namespace TypeBeat.Game
         private readonly Container healthBarContainer;
         private readonly List<Box> healthBarSegments = new List<Box>();
         private const int healthSegmentCount = 15; // Number of parallelogram segments
+        private const double gracePeriodMs = 2000; // 2 second grace period without countdown
         private float currentAccuracy = 100.0f;
         private int currentScore = 0;
         private double currentHealth = 1.0; // Health from 0.0 to 1.0 (100%)
         private const double max_health = 1.0;
-        private const double health_drain_rate = 0.02; // Health drain per second
+        private const double health_drain_rate = 0.018; // Health drain per second (slightly reduced from 0.02)
         private double lastHealthDrainTime = 0;
         private readonly Ui.CentralWordContainer centralWord;
         private readonly Ui.WordPreviews wordPreviews;
         private readonly Container playfield;
+        private readonly Container scorePopupContainer;
         private readonly LayoutConfig layoutConfig = new LayoutConfig
         {
             HalfGapXFraction = 0.2f 
@@ -73,6 +79,13 @@ namespace TypeBeat.Game
     private double gameplayStartClockMs = 0;
     private double pauseTime = 0;
     private Track gameTrack;
+    private Sample kickSound;
+    private Sample snareSound;
+    private bool isGameOver = false;
+    private Note firstNoteForCue;
+    private Note secondNoteForVelocity;
+    private DrawableNotePairAbsolute standaloneFirstCue;
+    private bool firstCueActive = false;
 
         [Resolved]
         private IRenderer renderer { get; set; }
@@ -82,6 +95,15 @@ namespace TypeBeat.Game
 
         [Resolved]
         private TextureStore textures { get; set; }
+        
+        [Resolved]
+        private AuthenticationService authService { get; set; }
+        
+        [Resolved]
+        private ScoreSubmissionService scoreService { get; set; }
+        
+        [Resolved]
+        private Ui.LoginOverlay loginOverlay { get; set; }
 
         public GameScreen(Beatpack beatpack, Beatmap beatmap)
         {
@@ -205,8 +227,8 @@ namespace TypeBeat.Game
                     AutoSizeAxes = Axes.Both,
                     Child = comboText = new SpriteText
                     {
-                        Text = "COMBO: X0",
-                        Font = new FontUsage("Inter", size: 24),
+                        Text = "x0",
+                        Font = new FontUsage("Kodchasan", size: 48, weight: "Bold"),
                         Colour = Colour4.White
                     }
                 },
@@ -215,7 +237,7 @@ namespace TypeBeat.Game
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Y = -80
+                    Y = -130
                 },
                 // Top-right UI container (accuracy only now)
                 new Container
@@ -263,6 +285,15 @@ namespace TypeBeat.Game
                     Size = new Vector2(1200, 200), 
                     Alpha = 0,
                     Depth = -1000 
+                },
+                // Score feedback popup container at bottom center with judgement glow
+                scorePopupContainer = new Container
+                {
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.Centre,
+                    Y = -100, // Same as judgement glow
+                    AutoSizeAxes = Axes.Both,
+                    Depth = -2000 // Above everything
                 }
             };
 
@@ -278,6 +309,23 @@ namespace TypeBeat.Game
         [BackgroundDependencyLoader]
         private void load()
         {
+            // Load sound effects
+            Logger.Log("[GameScreen] Attempting to load sounds...", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Try different paths
+            kickSound = audioManager.Samples.Get("Samples/Kick");
+            snareSound = audioManager.Samples.Get("Samples/Snare");
+            Logger.Log($"[GameScreen] Samples/Kick: {kickSound != null}, Samples/Snare: {snareSound != null}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            if (kickSound == null)
+            {
+                kickSound = audioManager.Samples.Get("Kick.ogg");
+                snareSound = audioManager.Samples.Get("Snare.ogg");
+                Logger.Log($"[GameScreen] Kick.ogg: {kickSound != null}, Snare.ogg: {snareSound != null}", LoggingTarget.Runtime, LogLevel.Important);
+            }
+            
+            Logger.Log($"[GameScreen] Final - Kick: {kickSound != null}, Snare: {snareSound != null}", LoggingTarget.Runtime, LogLevel.Important);
+            
             // Load t6 logo for health bar
             healthBarLogo.Texture = textures.Get("images/logo/Logo");
             
@@ -411,14 +459,24 @@ namespace TypeBeat.Game
                     string word0 = toWord(segmentsArr.ElementAtOrDefault(0));
                     string word1 = toWord(segmentsArr.ElementAtOrDefault(1));
                     string word2 = toWord(segmentsArr.ElementAtOrDefault(2));
+                    string word3 = toWord(segmentsArr.ElementAtOrDefault(3));
 
                     // Center word is current (index 0)
                     centralWord.SetWord(word0);
-                    // Preview above should show only the NEXT word
-                    wordPreviews.SetPreviews(string.Empty, word1, string.Empty);
+                    // Preview shows 3 upcoming words with gradual size/opacity increase
+                    wordPreviews.SetPreviews(word1, word2, word3);
 
-                    // Spawn visuals for the first segment
-                    noteScheduler.LoadSegment(segmentsArr.ElementAtOrDefault(0));
+                    // Load ALL segments into the scheduler - notes will spawn based on time
+                    noteScheduler.LoadAllSegments(segments);
+
+                    // Determine first and second earliest notes (by EndTime)
+                    var orderedByEnd = segments
+                        .Where(s => s?.Notes != null)
+                        .SelectMany(s => s.Notes)
+                        .OrderBy(n => n.EndTime)
+                        .ToList();
+                    firstNoteForCue = orderedByEnd.ElementAtOrDefault(0);
+                    secondNoteForVelocity = orderedByEnd.ElementAtOrDefault(1);
                 }
             }
             catch (Exception ex)
@@ -481,48 +539,128 @@ namespace TypeBeat.Game
 
         private void UpdateCombo()
         {
-            comboText.Text = $"COMBO: X{score.Combo}";
+            comboText.Text = $"x{score.Combo}";
         }
 
         private void ShowJudgementGlow(JudgementType judgement)
         {
             Logger.Log($"[GameScreen] ShowJudgementGlow called with {judgement}, texture={judgementGlow.Texture != null}, alpha={judgementGlow.Alpha}", LoggingTarget.Runtime, LogLevel.Important);
             
-            // Set color based on judgment type
+            // Set color based on judgment type (osu! standard colors)
             Colour4 glowColor = judgement switch
             {
-                JudgementType.Perfect300 => Colour4.FromHex("#FFD700"), // Gold
-                JudgementType.Great200 => Colour4.FromHex("#00FF00"),   // Green
-                JudgementType.Good100 => Colour4.FromHex("#00FFFF"),    // Cyan
+                JudgementType.Perfect300 => Colour4.FromHex("#66CCFF"), // Sky blue
+                JudgementType.Great200 => Colour4.FromHex("#88FF88"),   // Light green
+                JudgementType.Good100 => Colour4.FromHex("#FFDD00"),    // Yellow
                 JudgementType.Meh50 => Colour4.FromHex("#FF8800"),      // Orange
-                _ => Colour4.FromHex("#FF0000")                         // Red for miss
+                _ => Colour4.FromHex("#FF4444")                         // Red for miss
             };
 
             judgementGlow.Colour = glowColor;
             
-            // Flash animation with scale
-            judgementGlow.ScaleTo(0.8f, 0)
+            // Subtle flash animation with scale
+            judgementGlow.ScaleTo(0.9f, 0)
                          .Then()
-                         .ScaleTo(1.2f, 100, Easing.OutQuint)
+                         .ScaleTo(1.1f, 80, Easing.OutQuint)
                          .Then()
-                         .ScaleTo(1.0f, 200, Easing.InQuint);
+                         .ScaleTo(1.0f, 150, Easing.InQuint);
                          
-            judgementGlow.FadeTo(0.9f, 50)
+            judgementGlow.FadeTo(0.4f, 40)
                          .Then()
-                         .FadeOut(400, Easing.OutQuint);
+                         .FadeOut(300, Easing.OutQuint);
+        }
+
+        private void ShowScorePopup(JudgementType judgement)
+        {
+            // Get score value and color based on judgement
+            string scoreText = judgement switch
+            {
+                JudgementType.Perfect300 => "300",
+                JudgementType.Great200 => "200",
+                JudgementType.Good100 => "100",
+                JudgementType.Meh50 => "50",
+                _ => "MISS"
+            };
+
+            Colour4 scoreColor = judgement switch
+            {
+                JudgementType.Perfect300 => Colour4.FromHex("#66CCFF"), // Sky blue (osu! style)
+                JudgementType.Great200 => Colour4.FromHex("#88FF88"),   // Light green
+                JudgementType.Good100 => Colour4.FromHex("#FFDD00"),    // Yellow
+                JudgementType.Meh50 => Colour4.FromHex("#FF8800"),      // Orange
+                _ => Colour4.FromHex("#FF4444")                         // Red
+            };
+
+            // Create popup text with glow effect
+            var popup = new Container
+            {
+                AutoSizeAxes = Axes.Both,
+                Alpha = 0,
+                Children = new Drawable[]
+                {
+                    // White glow background
+                    new SpriteText
+                    {
+                        Text = scoreText,
+                        Font = new FontUsage("Kodchasan", size: 72, weight: "Bold"),
+                        Colour = Colour4.White,
+                        Alpha = 0.4f,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Shadow = true,
+                        ShadowColour = Colour4.White.Opacity(0.8f)
+                    },
+                    // Main colored text
+                    new SpriteText
+                    {
+                        Text = scoreText,
+                        Font = new FontUsage("Kodchasan", size: 64, weight: "Bold"),
+                        Colour = scoreColor,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Shadow = true,
+                        ShadowColour = Colour4.Black.Opacity(0.5f)
+                    }
+                }
+            };
+
+            scorePopupContainer.Add(popup);
+
+            // Animation: fade in, scale up with pulse, fade out
+            popup.FadeInFromZero(100)
+                 .Then()
+                 .FadeOut(500, Easing.OutQuint);
+            
+            popup.ScaleTo(0.5f)
+                 .Then()
+                 .ScaleTo(1.4f, 150, Easing.OutElastic)
+                 .Then()
+                 .ScaleTo(1.0f, 250, Easing.InOutQuint);
+
+            // Remove after animation
+            Scheduler.AddDelayed(() => popup.Expire(), 700);
         }
 
         private void UpdateHealth(JudgementType judgement)
         {
             double healthChange = judgement switch
             {
-                JudgementType.Perfect300 => 0.01,   // +1% health
-                JudgementType.Great200 => 0.005,    // +0.5% health
-                JudgementType.Good100 => 0.002,     // +0.2% health
-                JudgementType.Meh50 => -0.01,       // -1% health
-                JudgementType.Miss => -0.04,        // -4% health (harsh penalty)
+                JudgementType.Perfect300 => 0.012,  // +1.2% base health (slightly increased from 1%)
+                JudgementType.Great200 => 0.006,    // +0.6% health (slightly increased from 0.5%)
+                JudgementType.Good100 => 0.003,     // +0.3% health (slightly increased from 0.2%)
+                JudgementType.Meh50 => -0.03,      // -0.8% health (slightly reduced penalty from -1%)
+                JudgementType.Miss => -0.1,        // -6% health (VERY punishing)
                 _ => 0
             };
+            
+            // Combo-scaled healing bonus for Perfect 300s only
+            if (judgement == JudgementType.Perfect300 && score.Combo > 10)
+            {
+                // Add up to +0.5% extra healing at combo 50+
+                // Combo 10: +0.1%, Combo 25: +0.25%, Combo 50+: +0.5% (max)
+                double comboBonus = Math.Min(score.Combo / 100.0, 0.005);
+                healthChange += comboBonus;
+            }
 
             currentHealth = Math.Clamp(currentHealth + healthChange, 0.0, max_health);
             UpdateHealthBar();
@@ -596,23 +734,111 @@ namespace TypeBeat.Game
             });
         }
 
+        private void ShowCountdown()
+        {
+            // Prevent game updates during countdown
+            isCountingDown = true;
+            
+            // Semi-transparent black background for countdown
+            var countdownBackground = new Box
+            {
+                RelativeSizeAxes = Axes.Both,
+                Colour = Colour4.Black,
+                Alpha = 0.7f,
+                Depth = -1000 // Negative depth = topmost layer
+            };
+            
+            var countdownText = new SpriteText
+            {
+                Font = new FontUsage("Kodchasan", size: 120, weight: "Bold"),
+                Colour = Colour4.White,
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Y = 120, // Position below center (below word container)
+                Alpha = 0,
+                Depth = -1000 // Topmost layer
+            };
+            
+            AddInternal(countdownBackground);
+            AddInternal(countdownText);
+            
+            // Fade out background and enable gameplay when countdown ends
+            Scheduler.AddDelayed(() =>
+            {
+                countdownBackground.FadeOut(500).Expire();
+                isCountingDown = false; // Allow game to start
+            }, gracePeriodMs);
+            
+            // Show "3", "2", "1"
+            Scheduler.AddDelayed(() =>
+            {
+                countdownText.Text = "3";
+                countdownText.FadeIn(100).Then().ScaleTo(1.2f, 900, Easing.OutQuint).FadeOut(900, Easing.OutQuint);
+            }, 0);
+            
+            Scheduler.AddDelayed(() =>
+            {
+                countdownText.Alpha = 0;
+                countdownText.Scale = new Vector2(1f);
+                countdownText.Text = "2";
+                countdownText.FadeIn(100).Then().ScaleTo(1.2f, 900, Easing.OutQuint).FadeOut(900, Easing.OutQuint);
+            }, 1000);
+            
+            Scheduler.AddDelayed(() =>
+            {
+                countdownText.Alpha = 0;
+                countdownText.Scale = new Vector2(1f);
+                countdownText.Text = "1";
+                countdownText.FadeIn(100).Then().ScaleTo(1.2f, 900, Easing.OutQuint).FadeOut(900, Easing.OutQuint);
+            }, 2000);
+            
+            // Clean up countdown text
+            Scheduler.AddDelayed(() =>
+            {
+                countdownText.Expire();
+            }, 3000);
+        }
+
         public override void OnEntering(ScreenTransitionEvent e)
         {
             base.OnEntering(e);
             this.FadeInFromZero(300);
             
-            // Start the game audio - this marks the beginning of gameplay
+            // Set gameplay start time in the future (creates grace period)
+            gameplayStartClockMs = Clock.CurrentTime + gracePeriodMs;
+            noteScheduler.TimeOffsetMs = gameplayStartClockMs;
+            lastHealthDrainTime = Clock.CurrentTime + gracePeriodMs;
+            
+            // Start the music after the grace period
             if (gameTrack != null)
             {
-                gameTrack.Start();
-                Logger.Log("[GameScreen] Started gameplay audio - game has begun!", LoggingTarget.Runtime, LogLevel.Important);
+                Scheduler.AddDelayed(() =>
+                {
+                    gameTrack?.Start();
+                    Logger.Log("[GameScreen] Music started - gameplay begins!", LoggingTarget.Runtime, LogLevel.Important);
+                }, gracePeriodMs);
             }
+
+        // Spawn a standalone visual cue for the earliest note; exclude it from scheduler visuals
+        if (firstNoteForCue != null)
+        {
+            noteScheduler.ExcludedVisualNote = firstNoteForCue;
+
+            // Absolute timing: set start to match the second note's travel duration for consistent velocity
+            double arriveAbs = gameplayStartClockMs + firstNoteForCue.EndTime;
+            double desiredDuration = secondNoteForVelocity != null
+                ? Math.Max(1, secondNoteForVelocity.EndTime - secondNoteForVelocity.StartTime)
+                : 1000; // fallback 1s if no second note is available
+            double startAbs = arriveAbs - desiredDuration;
+            bool isSpace = !string.IsNullOrEmpty(firstNoteForCue.Character) && firstNoteForCue.Character[0] == TypingConstants.SpaceToken;
+            standaloneFirstCue = new DrawableNotePairAbsolute(startAbs, arriveAbs, isSpace, layoutConfig, appearanceConfig);
+            playfield.Add(standaloneFirstCue);
+            firstCueActive = true;
+            Logger.Log($"[GameScreen] Spawned standalone first-note cue startAbs={startAbs:F1} arriveAbs={arriveAbs:F1} (firstEnd={firstNoteForCue.EndTime:F1}, durationBasis={desiredDuration:F1})", LoggingTarget.Runtime, LogLevel.Important);
+        }
             
-            // Capture when gameplay starts to make all timing relative to audio start
-            gameplayStartClockMs = Clock.CurrentTime;
-            noteScheduler.TimeOffsetMs = gameplayStartClockMs;
-            lastHealthDrainTime = Clock.CurrentTime; // Initialize health drain timer
-            Logger.Log($"GameScreen entered with beatmap: {beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
+            // No visible countdown; 2s grace before gameplay/music starts
+            Logger.Log($"GameScreen entered with beatmap: {beatmap?.Title} (2s grace)", LoggingTarget.Runtime, LogLevel.Important);
         }
 
         public override bool OnExiting(ScreenExitEvent e)
@@ -666,10 +892,20 @@ namespace TypeBeat.Game
                 // Apply misses and update HUD for each consumed character
                 for (int i = 0; i < autoMissed; i++)
                 {
-                    noteScheduler.HitCurrentNote(); // Make missed notes disappear too
+                    if (firstCueActive)
+                    {
+                        // First note was missed by auto-consume: hide the standalone cue
+                        standaloneFirstCue?.OnHit();
+                        firstCueActive = false;
+                    }
+                    else
+                    {
+                        noteScheduler.HitCurrentNote(); // Make missed notes disappear too
+                    }
                     score.Apply(JudgementType.Miss);
                     centralWord.ConsumeNext();
                     ShowJudgementGlow(JudgementType.Miss);
+                    ShowScorePopup(JudgementType.Miss); // Show miss popup
                     UpdateHealth(JudgementType.Miss);
                 }
                 UpdateAccuracy(score.GetAccuracyPercent());
@@ -685,9 +921,11 @@ namespace TypeBeat.Game
                     typing.SetSegment(seg);
                     string w0 = toWord(segmentsArr.ElementAtOrDefault(currentSegmentIndex));
                     string w1 = toWord(segmentsArr.ElementAtOrDefault(currentSegmentIndex + 1));
+                    string w2 = toWord(segmentsArr.ElementAtOrDefault(currentSegmentIndex + 2));
+                    string w3 = toWord(segmentsArr.ElementAtOrDefault(currentSegmentIndex + 3));
                     centralWord.SetWord(w0);
-                    // Show only the next word above
-                    wordPreviews.SetPreviews(string.Empty, w1, string.Empty);
+                    // Show 3 upcoming words with gradual size/opacity increase
+                    wordPreviews.SetPreviews(w1, w2, w3);
                     noteScheduler.LoadSegment(seg);
                 }
             }
@@ -713,6 +951,7 @@ namespace TypeBeat.Game
                     pauseTime = Clock.CurrentTime;
                     pauseOverlay.FadeIn(150);
                     gameTrack?.Stop(); // Pause the music
+                    noteScheduler.IsPaused = true; // Pause note spawning/movement
                     
                     Logger.Log("[GameScreen] Game paused at " + pauseTime, LoggingTarget.Runtime, LogLevel.Important);
                 }
@@ -754,14 +993,45 @@ namespace TypeBeat.Game
                 return true; // Ignore keypresses outside note windows (QoL for ADHD players)
             
             // Key was consumed - make the visual note disappear
-            noteScheduler.HitCurrentNote();
+            if (firstCueActive)
+            {
+                standaloneFirstCue?.OnHit();
+                firstCueActive = false;
+            }
+            else
+            {
+                noteScheduler.HitCurrentNote();
+            }
+            
+            // Play sound effect
+            if (keyChar == '/')
+            {
+                if (snareSound != null)
+                {
+                    var channel = snareSound.Play();
+                    if (channel != null) channel.Volume.Value = 1.0; // Max volume
+                }
+            }
+            else
+            {
+                if (kickSound != null)
+                {
+                    var channel = kickSound.Play();
+                    if (channel != null) channel.Volume.Value = 1.0; // Max volume
+                }
+            }
             
             score.Apply(res.Judgement);
             UpdateScore(res.Judgement);
             UpdateAccuracy(score.GetAccuracyPercent());
             UpdateCombo();
+            
+            // Bounce combo text on successful hit
+            comboText.ScaleTo(1.3f, 100, Easing.OutQuint).Then().ScaleTo(1f, 200, Easing.OutElastic);
+            
             UpdateHealth(res.Judgement);
             ShowJudgementGlow(res.Judgement);
+            ShowScorePopup(res.Judgement); // Show score feedback popup
             centralWord.ConsumeNext();
             centralWord.PlayBounceEffect(); // Subtle bounce on key press
 
@@ -775,9 +1045,11 @@ namespace TypeBeat.Game
                     typing.SetSegment(seg);
                     string w0 = toWord(segmentsArr.ElementAtOrDefault(currentSegmentIndex));
                     string w1 = toWord(segmentsArr.ElementAtOrDefault(currentSegmentIndex + 1));
+                    string w2 = toWord(segmentsArr.ElementAtOrDefault(currentSegmentIndex + 2));
+                    string w3 = toWord(segmentsArr.ElementAtOrDefault(currentSegmentIndex + 3));
                     centralWord.SetWord(w0);
-                    // Show only the next word above
-                    wordPreviews.SetPreviews(string.Empty, w1, string.Empty);
+                    // Show 3 upcoming words with gradual size/opacity increase
+                    wordPreviews.SetPreviews(w1, w2, w3);
                     noteScheduler.LoadSegment(seg);
                 }
             }
@@ -888,11 +1160,45 @@ namespace TypeBeat.Game
                     double pauseDuration = Clock.CurrentTime - pauseTime;
                     gameplayStartClockMs += pauseDuration;
                     noteScheduler.TimeOffsetMs = gameplayStartClockMs;
+                    noteScheduler.IsPaused = false; // Resume note spawning/movement
                     
                     gameTrack?.Start(); // Resume the music
                     Logger.Log($"[GameScreen] Countdown finished, game resumed (pause duration: {pauseDuration}ms)", LoggingTarget.Runtime, LogLevel.Important);
                 });
             });
+        }
+
+        private void onBeatmapCompleted()
+        {
+            // Prevent multiple completion triggers
+            if (isGameOver) return;
+            
+            isGameOver = true;
+            isPaused = true;
+            
+            Logger.Log("[GameScreen] Beatmap completed! Waiting 2 seconds before showing results...", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Wait 2 seconds after last note, then transition to results screen
+            Schedule(() =>
+            {
+                this.Delay(2000).Schedule(() =>
+                {
+                    noteScheduler.IsPaused = true;
+                    gameTrack?.Stop();
+                    
+                    // Push to results screen with final score
+                    this.Push(new ResultsScreen(beatmap, score, authService, scoreService, loginOverlay));
+                });
+            });
+        }
+
+        private static string calculateGrade(double accuracy)
+        {
+            if (accuracy >= 95.0) return "S";
+            if (accuracy >= 90.0) return "A";
+            if (accuracy >= 80.0) return "B";
+            if (accuracy >= 70.0) return "C";
+            return "D";
         }
     }
 }

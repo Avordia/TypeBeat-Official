@@ -94,7 +94,7 @@ namespace TypeBeat.Game
                         {
                             Y = 0,
                             AutoSizeAxes = Axes.Both,
-                            Child = new MenuButton("Play", Colour4.Orange, 15f, dimensions: new Vector2(200, 50), onClick: () => 
+                            Child = new MenuButton("Play", new Color4(255, 136, 0, 255), 24f, dimensions: new Vector2(220, 35), onClick: () => 
                             {
                                 mainLogo.FadeOut(400);
                                 songTitleText.FadeOut(400);
@@ -117,9 +117,9 @@ namespace TypeBeat.Game
                         },
                         new Container
                         {
-                            Y = 60,
+                            Y = 50,
                             AutoSizeAxes = Axes.Both,
-                            Child = new MenuButton("Create", Colour4.YellowGreen, 15f, dimensions: new Vector2(200, 50), onClick: () => 
+                            Child = new MenuButton("Create", new Color4(255, 0, 255, 255), 24f, dimensions: new Vector2(220, 35), onClick: () => 
                             {
                                 // Check if user is logged in
                                 if (!authService.IsLoggedIn)
@@ -150,15 +150,15 @@ namespace TypeBeat.Game
                         },
                         new Container
                         {
-                            Y = 120,
+                            Y = 100,
                             AutoSizeAxes = Axes.Both,
-                            Child = new MenuButton("Explore", Colour4.DeepSkyBlue, 15f, dimensions: new Vector2(200, 50))
+                            Child = new MenuButton("Explore", new Color4(255, 85, 85, 255), 24f, dimensions: new Vector2(220, 35))
                         },
                         new Container
                         {
-                            Y = 180,
+                            Y = 150,
                             AutoSizeAxes = Axes.Both,
-                            Child = new MenuButton("Options", Colour4.HotPink, 15f, dimensions: new Vector2(200, 50))
+                            Child = new MenuButton("Options", new Color4(102, 102, 255, 255), 24f, dimensions: new Vector2(220, 35))
                         }
                     }
                 },
@@ -525,7 +525,7 @@ namespace TypeBeat.Game
 
             if (menuButtons != null)
             {
-                menuButtons.ClearTransforms(true);
+                menuButtons.ClearTransforms();
                 if (isInMenuMode)
                     menuButtons.FadeTo(1, 0);
 

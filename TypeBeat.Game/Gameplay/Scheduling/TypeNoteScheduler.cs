@@ -10,15 +10,21 @@ using System.Linq;
 namespace TypeBeat.Game.Gameplay.Scheduling
 {
     /// <summary>
-    /// Spawns and manages DrawableMusicNote objects for the active segment.
+    /// Spawns and manages DrawableMusicNote objects for all segments based on timing.
+    /// Notes spawn strictly based on their StartTime regardless of current segment.
     /// </summary>
     public partial class TypeNoteScheduler : CompositeDrawable
     {
         private readonly TypeNoteLayoutConfig layout;
-        private WordSegment segment;
+        private List<WordSegment> allSegments = new List<WordSegment>();
         private readonly HashSet<Note> spawned = new HashSet<Note>();
         private readonly List<DrawableMusicNote> activeNotes = new List<DrawableMusicNote>();
         private int currentNoteIndex = 0; // Tracks which note in the segment we're on
+
+        /// <summary>
+        /// Spawn notes slightly before their StartTime to ensure smooth entry.
+        /// </summary>
+        public double PreloadMs { get; set; } = 0;
 
         /// <summary>
         /// Offset to subtract from Clock.CurrentTime for gameplay timing.
@@ -33,16 +39,33 @@ namespace TypeBeat.Game.Gameplay.Scheduling
             Origin = Anchor.TopLeft;
         }
 
-        public void LoadSegment(WordSegment segment)
+        /// <summary>
+        /// Load all segments from the beatmap. Notes will spawn based on time across all segments.
+        /// </summary>
+        public void LoadAllSegments(List<WordSegment> segments)
         {
-            this.segment = segment;
+            this.allSegments = segments ?? new List<WordSegment>();
             spawned.Clear();
             activeNotes.Clear();
             currentNoteIndex = 0;
             ClearInternal(); // Clear all old notes
             
-            if (segment != null)
-                Logger.Log($"[TypeNoteScheduler] Loaded segment with {segment.Notes?.Count ?? 0} notes", LoggingTarget.Runtime, LogLevel.Important);
+            int totalNotes = 0;
+            foreach (var seg in allSegments)
+            {
+                totalNotes += seg.Notes?.Count ?? 0;
+            }
+            Logger.Log($"[TypeNoteScheduler] Loaded {allSegments.Count} segments with {totalNotes} total notes", LoggingTarget.Runtime, LogLevel.Important);
+        }
+
+        /// <summary>
+        /// Legacy method - still used for segment tracking. Now only updates current segment index.
+        /// </summary>
+        public void LoadSegment(WordSegment segment)
+        {
+            // This method is kept for compatibility but doesn't affect spawning anymore
+            // Notes spawn based on time from all segments loaded via LoadAllSegments
+            Logger.Log($"[TypeNoteScheduler] Current segment changed (spawning continues across all segments)", LoggingTarget.Runtime, LogLevel.Important);
         }
 
         /// <summary>
@@ -61,28 +84,33 @@ namespace TypeBeat.Game.Gameplay.Scheduling
         {
             base.Update();
 
-            if (segment == null || segment.Notes == null || segment.Notes.Count == 0)
+            if (allSegments == null || allSegments.Count == 0)
                 return;
 
             double now = Clock.CurrentTime - TimeOffsetMs;
-            if (now < 0) now = 0;
+            // Allow negative time during grace period - don't clamp!
 
-            // This logic is simple, but if segments are long, it can be slow.
-            // It's okay for now.
-            foreach (var n in segment.Notes)
+            // Check ALL segments and spawn notes based on time, not segment state
+            foreach (var segment in allSegments)
             {
-                if (spawned.Contains(n)) continue;
-
-                if (now >= n.StartTime)
+                if (segment?.Notes == null) continue;
+                
+                foreach (var n in segment.Notes)
                 {
-                    var drawableNote = new DrawableMusicNote(n, layout, TimeOffsetMs)
-                    {
-                        TimeOffsetMs = this.TimeOffsetMs // Pass the offset
-                    };
+                    if (spawned.Contains(n)) continue;
 
-                    AddInternal(drawableNote);
-                    activeNotes.Add(drawableNote); // Track for hit notification
-                    spawned.Add(n);
+                    double spawnAt = n.StartTime - PreloadMs;
+                    if (now >= spawnAt)
+                    {
+                        var drawableNote = new DrawableMusicNote(n, layout, TimeOffsetMs)
+                        {
+                            TimeOffsetMs = this.TimeOffsetMs // Pass the offset
+                        };
+
+                        AddInternal(drawableNote);
+                        activeNotes.Add(drawableNote); // Track for hit notification
+                        spawned.Add(n);
+                    }
                 }
             }
         }

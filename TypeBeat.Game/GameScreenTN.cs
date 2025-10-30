@@ -53,6 +53,7 @@ namespace TypeBeat.Game
 
         // --- NEW VISUALS ---
         private readonly Container playfield;
+        private readonly Container scorePopupContainer;
         private readonly TypeNoteScheduler noteScheduler; // <-- Replaced NoteScheduler
         private readonly TypeNoteLayoutConfig typeNoteLayoutConfig = new TypeNoteLayoutConfig
         {
@@ -133,6 +134,9 @@ namespace TypeBeat.Game
                     Anchor = Anchor.TopLeft,
                     Origin = Anchor.TopLeft,
                     Child = noteScheduler = new TypeNoteScheduler(typeNoteLayoutConfig) // <-- Use new scheduler
+                    {
+                        PreloadMs = 1000 // First note appears 1 second before music starts
+                    }
                 },
                 // -------------------------
 
@@ -210,6 +214,14 @@ namespace TypeBeat.Game
                         Colour = Colour4.White,
                         Spacing = new Vector2(0.25f, 0)
                     }
+                },
+                // Score popup container for floating score text
+                scorePopupContainer = new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Depth = -500 // Above most elements but below HUD
                 },
                 new Container // Combo Text
                 {
@@ -378,9 +390,8 @@ namespace TypeBeat.Game
                     
                     noteQueue.SetSegment(firstSegment);
                     
-                    // --- ADD THIS ---
-                    noteScheduler.LoadSegment(firstSegment);
-                    // ----------------
+                    // Load ALL segments into the scheduler - notes will spawn based on time
+                    noteScheduler.LoadAllSegments(segments);
                 }
             }
             catch (Exception ex)
@@ -406,12 +417,17 @@ namespace TypeBeat.Game
 
         private void UpdateScore(JudgementType judgement)
         {
-           int scoreGain = judgement switch { JudgementType.Perfect300 => 300, JudgementType.Great200 => 200, JudgementType.Good100 => 100, JudgementType.Meh50 => 50, _ => 0 }; int comboMultiplier = Math.Min(score.Combo / 25, 4); currentScore += scoreGain * (1 + comboMultiplier); scoreText.Text = currentScore.ToString("D12");
+           int scoreGain = judgement switch { JudgementType.Perfect300 => 300, JudgementType.Great200 => 200, JudgementType.Good100 => 100, JudgementType.Meh50 => 50, _ => 0 }; int comboMultiplier = Math.Min(score.Combo / 25, 4); int totalScoreGain = scoreGain * (1 + comboMultiplier); currentScore += totalScoreGain; scoreText.Text = currentScore.ToString("D12"); if (scoreGain > 0) ShowScorePopup(totalScoreGain, judgement);
         }
 
         private void UpdateCombo()
         {
            comboText.Text = $"COMBO: X{score.Combo}";
+        }
+
+        private void ShowScorePopup(int scoreValue, JudgementType judgement)
+        {
+            Colour4 color = judgement switch { JudgementType.Perfect300 => Colour4.FromHex("#FFD700"), JudgementType.Great200 => Colour4.FromHex("#00FF00"), JudgementType.Good100 => Colour4.FromHex("#00FFFF"), JudgementType.Meh50 => Colour4.FromHex("#FF8800"), _ => Colour4.Red }; var popupContainer = new Container { Anchor = Anchor.Centre, Origin = Anchor.Centre, AutoSizeAxes = Axes.Both, Alpha = 0 }; var glowLayers = new Drawable[] { new SpriteText { Text = $"+{scoreValue}", Font = new FontUsage("Roboto", size: 52, weight: "Bold"), Colour = Colour4.White, Anchor = Anchor.Centre, Origin = Anchor.Centre, Alpha = 0.3f }, new SpriteText { Text = $"+{scoreValue}", Font = new FontUsage("Roboto", size: 50, weight: "Bold"), Colour = Colour4.White, Anchor = Anchor.Centre, Origin = Anchor.Centre, Alpha = 0.5f }, new SpriteText { Text = $"+{scoreValue}", Font = new FontUsage("Roboto", size: 48, weight: "Bold"), Colour = color, Anchor = Anchor.Centre, Origin = Anchor.Centre, Shadow = true, ShadowColour = Colour4.Black.Opacity(0.5f) } }; popupContainer.Children = glowLayers; scorePopupContainer.Add(popupContainer); popupContainer.FadeInFromZero(100).Then().MoveToY(-80, 800, Easing.OutQuint).FadeOut(400, Easing.InQuint).Finally(_ => popupContainer.Expire()); popupContainer.ScaleTo(1.3f, 100, Easing.OutQuint).Then().ScaleTo(1f, 150, Easing.InOutQuint);
         }
 
         private void ShowJudgementGlow(JudgementType judgement)
@@ -440,20 +456,24 @@ namespace TypeBeat.Game
             base.OnEntering(e);
             this.FadeInFromZero(300);
             
+            // Set gameplay timing offset 2 seconds in the future (so gameplay time starts at -2000ms)
+            // This allows the first note to appear 1 second before music starts
+            gameplayStartClockMs = Clock.CurrentTime + 2000;
+            noteScheduler.TimeOffsetMs = gameplayStartClockMs;
+            lastHealthDrainTime = Clock.CurrentTime + 2000; // Initialize health drain timer to match music start
+            
+            // Delay music start by 2 seconds to give grace period
             if (gameTrack != null)
             {
-                gameTrack.Start();
-                Logger.Log("[GameScreenTN] Started gameplay audio - game has begun!", LoggingTarget.Runtime, LogLevel.Important);
+                Scheduler.AddDelayed(() =>
+                {
+                    gameTrack.Start();
+                    Logger.Log("[GameScreenTN] Started gameplay audio after 2s grace period!", LoggingTarget.Runtime, LogLevel.Important);
+                }, 2000);
             }
             
-            gameplayStartClockMs = Clock.CurrentTime;
-
-            // --- ADD THIS ---
-            noteScheduler.TimeOffsetMs = gameplayStartClockMs;
-            // ----------------
-            
-            lastHealthDrainTime = Clock.CurrentTime;
             Logger.Log($"GameScreenTN entered with beatmap: {beatmap?.Title}", LoggingTarget.Runtime, LogLevel.Important);
+            Logger.Log($"[GameScreenTN] Grace period: First note appears 1s before music starts", LoggingTarget.Runtime, LogLevel.Important);
         }
 
         public override bool OnExiting(ScreenExitEvent e)
@@ -490,7 +510,7 @@ namespace TypeBeat.Game
             // ...
 
             // Auto-miss overdue notes
-            double nowRel = Clock.CurrentTime - gameplayStartClockMs; if (nowRel < 0) nowRel = 0;
+            double nowRel = Clock.CurrentTime - gameplayStartClockMs; // Allow negative time during grace period
             int autoMissed = noteQueue.AutoConsumeMisses(nowRel, hitWindows, out bool segCompleted);
             if (autoMissed > 0)
             {
@@ -558,7 +578,7 @@ namespace TypeBeat.Game
             debugOutputNoteText.Text = $"({inputNote})";
             // --------------------
 
-            double now = Clock.CurrentTime - gameplayStartClockMs; if (now < 0) now = 0;
+            double now = Clock.CurrentTime - gameplayStartClockMs; // Allow negative time during grace period
             var res = noteQueue.HandleNotePress(inputNote, now, hitWindows); // Assuming NoteManager is correct class
 
             if (!res.Consumed) return true;

@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Colour;
 using osu.Framework.Input.Events;
 using osuTK;
+using osuTK.Graphics;
 using TypeBeat.Game.Beatmaps;
 
 namespace TypeBeat.Game.Ui
@@ -12,9 +16,12 @@ namespace TypeBeat.Game.Ui
     public partial class DifficultyButton : ClickableContainer
     {
         private readonly Box background;
+        private readonly Container trapezoidContainer;
+        private readonly Container trapezoidShape;
         private readonly SpriteText difficultyText;
         private readonly Beatmap beatmap;
-        
+        private readonly Container outerContainer;
+
         public event Action<Beatmap> OnSelected;
 
         private bool isSelected;
@@ -31,108 +38,200 @@ namespace TypeBeat.Game.Ui
         public DifficultyButton(Beatmap beatmap)
         {
             this.beatmap = beatmap;
-            
+
             Anchor = Anchor.CentreLeft;
             Origin = Anchor.CentreLeft;
-            AutoSizeAxes = Axes.Both; 
+            AutoSizeAxes = Axes.Both;
 
-            Children = new Drawable[]
+            // Get the base color for this difficulty
+            var baseColor = getStarRatingColour(beatmap.StarRating);
+
+            Child = outerContainer = new Container
             {
-                // Outer container for border
-                new Container
+                AutoSizeAxes = Axes.Both,
+                Masking = true,
+                CornerRadius = 16f,
+                BorderThickness = 6f,
+                BorderColour = Color4.Black,
+                Children = new Drawable[]
                 {
-                    AutoSizeAxes = Axes.Both,
-                    Masking = true,
-                    CornerRadius = 14,
-                    Children = new Drawable[]
+                    // Background with gradient (lighter on left, darker on right)
+                    background = new Box
                     {
-                        // Border box
-                        new Box
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = ColourInfo.GradientHorizontal(
+                            lightenColor(baseColor, 0.2f),
+                            darkenColor(baseColor, 0.2f)
+                        )
+                    },
+                    // Animated hazard stripe pattern container
+                    trapezoidContainer = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Child = trapezoidShape = new Container
                         {
-                            RelativeSizeAxes = Axes.Both,
-                            Colour = Colour4.FromHex("#1C1C1C"),
-                        },
-                        // Content container with inner background
-                        new Container
-                        {
-                            AutoSizeAxes = Axes.Both,
-                            Margin = new MarginPadding(2), // Border thickness
-                            Masking = true,
-                            CornerRadius = 12,
-                            Children = new Drawable[]
+                            Anchor = Anchor.CentreLeft,
+                            Origin = Anchor.CentreLeft,
+                            RelativeSizeAxes = Axes.Y,
+                            Width = 2000,
+                            X = -1000,
+                            Child = new FillFlowContainer
                             {
-                                background = new Box
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Colour = Colour4.FromHex("#373737"),
-                                },
-                                difficultyText = new SpriteText
-                                {
-                                    Anchor = Anchor.Centre,
-                                    Origin = Anchor.Centre,
-                                    Font = new FontUsage("Inter-Bold", size: 18),
-                                    Colour = Colour4.White,
-                                    Spacing = new Vector2(0.25f, 0),
-                                    Margin = new MarginPadding { Horizontal = 30, Vertical = 8 },
-                                    Text = (beatmap.DifficultyName ?? "Unknown").ToUpperInvariant()
-                                }
+                                Direction = FillDirection.Horizontal,
+                                RelativeSizeAxes = Axes.Y,
+                                AutoSizeAxes = Axes.X,
+                                Spacing = new Vector2(10, 0),
+                                Children = createHazardPattern()
                             }
+                        }
+                    },
+                    // Text
+                    new Container
+                    {
+                        AutoSizeAxes = Axes.Both,
+                        Child = difficultyText = new SpriteText
+                        {
+                            Text = addLetterSpacing(beatmap.DifficultyName ?? "Unknown"),
+                            Font = new FontUsage("Kodchasan-Bold", size: 18),
+                            Padding = new MarginPadding { Horizontal = 30, Vertical = 8 },
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Colour = Color4.White,
+                            Shadow = true,
+                            ShadowColour = new Color4(0, 0, 0, 100)
                         }
                     }
                 }
             };
         }
 
-        private Colour4 getStarRatingColour(double starRating)
+        protected override void LoadComplete()
         {
-            // Based on HealthBar gradient colors (reversed)
+            base.LoadComplete();
+            startTrapezoidAnimation();
+        }
+
+        private string addLetterSpacing(string text)
+        {
+            return string.Join(" ", text.ToUpper().ToCharArray());
+        }
+
+        private Color4 lightenColor(Color4 color, float amount)
+        {
+            return new Color4(
+                Math.Min(color.R + amount, 1.0f),
+                Math.Min(color.G + amount, 1.0f),
+                Math.Min(color.B + amount, 1.0f),
+                color.A
+            );
+        }
+
+        private Color4 darkenColor(Color4 color, float amount)
+        {
+            return new Color4(
+                Math.Max(color.R - amount, 0.0f),
+                Math.Max(color.G - amount, 0.0f),
+                Math.Max(color.B - amount, 0.0f),
+                color.A
+            );
+        }
+
+        private Drawable[] createHazardPattern()
+        {
+            var trapezoids = new List<Drawable>();
+            const int trapezoidCount = 25;
+            const float trapezoidWidth = 50f;
+
+            for (int i = 0; i < trapezoidCount; i++)
+            {
+                trapezoids.Add(new Container
+                {
+                    RelativeSizeAxes = Axes.Y,
+                    Width = trapezoidWidth,
+                    Shear = new Vector2(0.4f, 0),
+                    Child = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = Color4.White,
+                        Alpha = 0.25f
+                    }
+                });
+            }
+
+            return trapezoids.ToArray();
+        }
+
+        private void startTrapezoidAnimation()
+        {
+            trapezoidShape.Loop(d => d
+                .MoveTo(new Vector2(-1000, 0), 0)
+                .Then()
+                .MoveTo(new Vector2(0, 0), 6000)
+            );
+        }
+
+        private Color4 getStarRatingColour(double starRating)
+        {
             // Every 2.5 star rating increase = new color
-            // 0-2.5 = Purple/Blue, 2.5-5.0 = Pink/Magenta, 5.0-7.5 = Orange, 7.5+ = Red
-            
+            // 0-2.5 = Purple/Blue, 2.5-5.0 = Magenta, 5.0-7.5 = Orange, 7.5+ = Red
+
             if (starRating < 2.5)
-                return Colour4.FromHex("#6666DD"); // Purple/Blue
+                return new Color4(102, 102, 255, 255); // Purple/Blue
             else if (starRating < 5.0)
-                return Colour4.FromHex("#CC6699"); // Pink/Magenta
+                return new Color4(255, 0, 255, 255); // Magenta
             else if (starRating < 7.5)
-                return Colour4.FromHex("#FF8033"); // Orange
+                return new Color4(255, 136, 0, 255); // Orange
             else
-                return Colour4.FromHex("#FF3333"); // Red
+                return new Color4(255, 85, 85, 255); // Red
         }
 
         private void updateSelectionState()
         {
+            var baseColor = getStarRatingColour(beatmap.StarRating);
+
             if (isSelected)
             {
-                // Use star rating-based color when selected
-                background.FadeColour(getStarRatingColour(beatmap.StarRating), 200, Easing.OutQuint);
+                // Use star rating-based color gradient when selected
+                background.FadeColour(
+                    ColourInfo.GradientHorizontal(
+                        lightenColor(baseColor, 0.2f),
+                        darkenColor(baseColor, 0.2f)
+                    ), 200, Easing.OutQuint);
             }
             else
             {
-                background.FadeColour(Colour4.FromHex("#373737"), 200, Easing.OutQuint);
+                // Darker/desaturated when not selected
+                var desaturatedColor = new Color4(
+                    baseColor.R * 0.4f,
+                    baseColor.G * 0.4f,
+                    baseColor.B * 0.4f,
+                    baseColor.A
+                );
+                background.FadeColour(
+                    ColourInfo.GradientHorizontal(
+                        lightenColor(desaturatedColor, 0.1f),
+                        darkenColor(desaturatedColor, 0.1f)
+                    ), 200, Easing.OutQuint);
             }
         }
 
         protected override bool OnHover(HoverEvent e)
         {
-            if (!isSelected)
-                background.FadeColour(Colour4.FromHex("#4C4C4C"), 200, Easing.OutQuint);
-            
-            this.ScaleTo(1.05f, 200, Easing.OutQuint);
+            this.ScaleTo(1.1f, 200, Easing.OutQuint);
+            background.FadeTo(0.8f, 200);
             return base.OnHover(e);
         }
 
         protected override void OnHoverLost(HoverLostEvent e)
         {
-            if (!isSelected)
-                background.FadeColour(Colour4.FromHex("#373737"), 200, Easing.OutQuint);
-            
             this.ScaleTo(1f, 200, Easing.OutQuint);
+            background.FadeTo(1f, 200);
             base.OnHoverLost(e);
         }
 
         protected override bool OnClick(ClickEvent e)
         {
-            this.ScaleTo(0.95f, 100, Easing.OutQuint)
+            this.ScaleTo(0.9f, 100, Easing.OutQuint)
                 .Then()
                 .ScaleTo(1f, 100, Easing.OutQuint);
 

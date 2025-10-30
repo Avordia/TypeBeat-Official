@@ -9,6 +9,7 @@ using osu.Framework.Input.Events;
 using osu.Framework.Screens;
 using osuTK;
 using osuTK.Graphics;
+using osu.Framework.Graphics.Colour;
 
 namespace TypeBeat.Game.Ui
 {
@@ -21,7 +22,7 @@ namespace TypeBeat.Game.Ui
         private readonly Screen targetScreen;
         private readonly Action customAction;
         private readonly Container outerContainer;
-        
+
         public Color4 ButtonColor
         {
             set => background.FadeColour(value, 200);
@@ -30,7 +31,7 @@ namespace TypeBeat.Game.Ui
         public string Text
         {
             get => text.Text.ToString();
-            set => text.Text = value;
+            set => text.Text = addLetterSpacing(value);
         }
 
         public float TextSize
@@ -42,7 +43,7 @@ namespace TypeBeat.Game.Ui
         {
             targetScreen = target;
             customAction = onClick;
-            
+
             if (dimensions.HasValue)
             {
                 Width = dimensions.Value.X;
@@ -54,22 +55,24 @@ namespace TypeBeat.Game.Ui
                 AutoSizeAxes = Axes.Both;
             }
 
-            // Outer container for trapezoid shape
+            // Outer container for button shape
             Child = outerContainer = new Container
             {
                 RelativeSizeAxes = Axes.Both,
-                Shear = new Vector2(0.15f, 0), // Creates trapezoid shape
                 Masking = true,
-                CornerRadius = 25f,
-                BorderThickness = 5f,
+                CornerRadius = 16f,
+                BorderThickness = 6f, // Thicker border
                 BorderColour = Color4.Black,
                 Children = new Drawable[]
                 {
-                    // Background
+                    // Background with gradient (lighter on left, darker on right)
                     background = new Box
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Colour = color
+                        Colour = ColourInfo.GradientHorizontal(
+                            lightenColor(color, 0.2f), // Lighter on left
+                            darkenColor(color, 0.2f)   // Darker on right
+                        )
                     },
                     // Animated hazard stripe pattern container
                     trapezoidContainer = new Container
@@ -92,19 +95,20 @@ namespace TypeBeat.Game.Ui
                             }
                         }
                     },
-                    // Text (un-sheared to keep it straight)
+                    // Text
                     new Container
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Shear = new Vector2(-0.15f, 0), // Counter-shear to keep text straight
                         Child = text = new SpriteText
                         {
-                            Text = buttonText,
+                            Text = addLetterSpacing(buttonText),
                             Font = new FontUsage("Kodchasan-Bold", size: size),
-                            Padding = new MarginPadding { Horizontal = 20, Vertical = 10 },
+                            Padding = new MarginPadding { Horizontal = 60, Vertical = 6 },
                             Anchor = Anchor.Centre,
                             Origin = Anchor.Centre,
-                            Colour = Color4.White
+                            Colour = Color4.White,
+                            Shadow = true,
+                            ShadowColour = new Color4(0, 0, 0, 100)
                         }
                     }
                 }
@@ -115,6 +119,31 @@ namespace TypeBeat.Game.Ui
         {
             base.LoadComplete();
             startTrapezoidAnimation();
+        }
+
+        private string addLetterSpacing(string text)
+        {
+            return string.Join(" ", text.ToUpper().ToCharArray());
+        }
+
+        private Color4 lightenColor(Color4 color, float amount)
+        {
+            return new Color4(
+                Math.Min(color.R + amount, 1.0f),
+                Math.Min(color.G + amount, 1.0f),
+                Math.Min(color.B + amount, 1.0f),
+                color.A
+            );
+        }
+
+        private Color4 darkenColor(Color4 color, float amount)
+        {
+            return new Color4(
+                Math.Max(color.R - amount, 0.0f),
+                Math.Max(color.G - amount, 0.0f),
+                Math.Max(color.B - amount, 0.0f),
+                color.A
+            );
         }
 
         private Drawable[] createHazardPattern()
@@ -134,7 +163,7 @@ namespace TypeBeat.Game.Ui
                     {
                         RelativeSizeAxes = Axes.Both,
                         Colour = Color4.White,
-                        Alpha = 0.15f
+                        Alpha = 0.25f
                     }
                 });
             }
@@ -147,7 +176,7 @@ namespace TypeBeat.Game.Ui
             trapezoidShape.Loop(d => d
                 .MoveTo(new Vector2(-1000, 0), 0)
                 .Then()
-                .MoveTo(new Vector2(0, 0), 10000, Easing.InOutSine)
+                .MoveTo(new Vector2(0, 0), 6000)
             );
         }
 

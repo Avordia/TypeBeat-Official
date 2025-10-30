@@ -3,16 +3,16 @@
     <TargetFramework>net8.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <AssemblyName>TypeBeat</AssemblyName>
-    <ApplicationIcon>game.ico</ApplicationIcon>
+    <ApplicationIcon>TypeBeat.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.0.2</Version>
-    <FileVersion>0.0.2</FileVersion>
+    <Version>0.0.3</Version>
+    <FileVersion>0.0.3</FileVersion>
   </PropertyGroup>
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\TypeBeat.Game\TypeBeat.Game.csproj" />
   </ItemGroup>
   <ItemGroup Label="Resources">
-    <EmbeddedResource Include="game.ico" />
+    <EmbeddedResource Include="TypeBeat.ico" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ppy.osu.Framework" Version="2025.1008.0" />

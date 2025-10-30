@@ -21,13 +21,21 @@ namespace TypeBeat.Game
         private LocalBeatpackManager beatpackManager;
         private UpdateManager updateManager;
         private UpdateNotificationOverlay updateNotification;
+        private TypeBeat.Game.Ui.LoginOverlay loginOverlay;
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
         {
             var dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
             
             // Register authentication service for dependency injection
-            dependencies.Cache(new AuthenticationService());
+            var authService = new AuthenticationService();
+            dependencies.Cache(authService);
+            
+            // Register score submission service for dependency injection
+            dependencies.Cache(new ScoreSubmissionService());
+            
+            // Register login overlay for dependency injection
+            dependencies.Cache(loginOverlay = new TypeBeat.Game.Ui.LoginOverlay(authService));
             
             // Register local beatpack manager for dependency injection
             dependencies.Cache(beatpackManager = new LocalBeatpackManager());
@@ -54,7 +62,8 @@ namespace TypeBeat.Game
             {
                 beatpackManager,
                 screenStack = new ScreenStack { RelativeSizeAxes = Axes.Both },
-                updateNotification = new UpdateNotificationOverlay()
+                updateNotification = new UpdateNotificationOverlay(),
+                loginOverlay // Add login overlay as global overlay
             };
         }
 

@@ -68,8 +68,13 @@ namespace TypeBeat.Game.Gameplay.Objects
                 },
             };
 
-            // Make visible by default
-            Alpha = 1;
+            // Don't animate container alpha - let child sprites control visibility
+            // This prevents artifacts during initial positioning
+        }
+        
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
         }
 
         [BackgroundDependencyLoader]
@@ -107,7 +112,7 @@ namespace TypeBeat.Game.Gameplay.Objects
 
             // Current time from clock; this Drawable uses the parent's clock (GameScreen/Conductor later).
             double t = Clock.CurrentTime - TimeOffsetMs;
-            if (t < 0) t = 0;
+            // Allow negative time during grace period - don't clamp!
             float width = DrawSize.X;
             float height = DrawSize.Y;
             var size = new Vector2(width, height);

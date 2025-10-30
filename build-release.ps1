@@ -26,10 +26,12 @@ $publishDir = ".\TypeBeat.Desktop\bin\$Configuration\net8.0\win-x64\publish"
 dotnet publish .\TypeBeat.Desktop\TypeBeat.Desktop.csproj `
     -c $Configuration `
     -r win-x64 `
-    --self-contained false `
+    --self-contained true `
     -p:Version=$Version `
     -p:PublishSingleFile=false `
-    -p:IncludeNativeLibrariesForSelfExtract=true
+    -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:PublishReadyToRun=true `
+    -p:PublishTrimmed=false
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
@@ -96,6 +98,10 @@ if (-not (Test-Path $squirrelExe)) {
     }
 }
 
+# Copy tbbp icon for file associations
+Write-Host "Copying file association icons..." -ForegroundColor Yellow
+Copy-Item ".\TypeBeat.Resources\images\icons\tbbp.ico" -Destination $publishDir -Force
+
 # Create Squirrel package
 Write-Host "Creating installer package..." -ForegroundColor Yellow
 & $squirrelExe pack `
@@ -103,7 +109,7 @@ Write-Host "Creating installer package..." -ForegroundColor Yellow
     --packVersion $Version `
     --packDirectory $publishDir `
     --releaseDir $OutputDir `
-    --icon ".\TypeBeat.Desktop\game.ico" `
+    --icon ".\TypeBeat.Desktop\TypeBeat.ico" `
     --allowUnaware
 
 if ($LASTEXITCODE -eq 0) {

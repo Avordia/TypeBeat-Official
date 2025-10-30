@@ -27,9 +27,14 @@ namespace TypeBeat.Game
         [BackgroundDependencyLoader]
         private void load()
         {
-            Resources.AddStore(new DllResourceStore(typeof(TypeBeatResources).Assembly));
+            // Load embedded resources from TypeBeat.Resources.dll
+            var resourceStore = new DllResourceStore(typeof(TypeBeatResources).Assembly);
+            Resources.AddStore(resourceStore);
             dependencies.CacheAs(new TextureStore(Host.Renderer, new TextureLoaderStore(Resources)));
             Resources.AddStore(new DllResourceStore(TypeBeatResources.ResourceAssembly));
+            
+            // Note: Audio.Samples automatically uses the game's Resources store
+            // No need to manually add stores - it should work if Resources are set up correctly
             
             // Add all font families
             // Kodchasan regular and bold variants
@@ -38,6 +43,8 @@ namespace TypeBeat.Game
             // Inter font
             AddFont(Resources, "Fonts/Inter");
             AddFont(Resources, "Fonts/Inter-Bold");
+
+            AddFont(Resources, "Fonts/Gunship");
         }
     }
 }
