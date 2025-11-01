@@ -81,6 +81,11 @@ namespace TypeBeat.Game
     private Track gameTrack;
     private Sample kickSound;
     private Sample snareSound;
+    private Sample customTypeBeatSample;
+    private Sample customSpaceSample;
+    private FileStream customSampleFileStream;
+    private ZipArchiveResourceStore customSampleResourceStore;
+    private ISampleStore customSampleStore;
     private bool isGameOver = false;
     private Note firstNoteForCue;
     private Note secondNoteForVelocity;
@@ -312,19 +317,7 @@ namespace TypeBeat.Game
             // Load sound effects
             Logger.Log("[GameScreen] Attempting to load sounds...", LoggingTarget.Runtime, LogLevel.Important);
             
-            // Try different paths
-            kickSound = audioManager.Samples.Get("Samples/Kick");
-            snareSound = audioManager.Samples.Get("Samples/Snare");
-            Logger.Log($"[GameScreen] Samples/Kick: {kickSound != null}, Samples/Snare: {snareSound != null}", LoggingTarget.Runtime, LogLevel.Important);
-            
-            if (kickSound == null)
-            {
-                kickSound = audioManager.Samples.Get("Kick.ogg");
-                snareSound = audioManager.Samples.Get("Snare.ogg");
-                Logger.Log($"[GameScreen] Kick.ogg: {kickSound != null}, Snare.ogg: {snareSound != null}", LoggingTarget.Runtime, LogLevel.Important);
-            }
-            
-            Logger.Log($"[GameScreen] Final - Kick: {kickSound != null}, Snare: {snareSound != null}", LoggingTarget.Runtime, LogLevel.Important);
+            loadCustomSounds();
             
             // Load t6 logo for health bar
             healthBarLogo.Texture = textures.Get("images/logo/Logo");
@@ -388,63 +381,81 @@ namespace TypeBeat.Game
             Logger.Log($"[GameScreen] Judgement glow texture loaded: {judgementGlow.Texture != null}", LoggingTarget.Runtime, LogLevel.Important);
             
             // Load game audio from beatpack
-            if (!string.IsNullOrEmpty(beatpack.MusicPath))
+            try
+            {
+                using (var stream = File.OpenRead(beatpack.FilePath))
+                {
+                    var beatmapAssetStorage = new ZipArchiveResourceStore(stream);
+                    var trackStore = audioManager.GetTrackStore(beatmapAssetStorage);
+                    
+                    // Try MusicPath first (old format or manifest-specified path)
+                    if (!string.IsNullOrEmpty(beatpack.MusicPath))
+                    {
+                        gameTrack = trackStore.Get(beatpack.MusicPath);
+                    }
+                    
+                    // Fallback to audio.mp3 (new format default)
+                    if (gameTrack == null)
+                    {
+                        gameTrack = trackStore.Get("audio.mp3");
+                    }
+                    
+                    if (gameTrack != null)
+                    {
+                        gameTrack.Looping = false; // Don't loop gameplay music
+                        Logger.Log($"[GameScreen] Loaded audio track: {beatpack.MusicPath ?? "audio.mp3"}", LoggingTarget.Runtime, LogLevel.Important);
+                    }
+                    else
+                    {
+                        Logger.Log($"[GameScreen] Failed to load audio track", LoggingTarget.Runtime, LogLevel.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to load game audio");
+            }
+            
+            // Load background image
+            Schedule(() =>
             {
                 try
                 {
                     using (var stream = File.OpenRead(beatpack.FilePath))
+                    using (var archive = new ZipArchive(stream))
                     {
-                        var beatmapAssetStorage = new ZipArchiveResourceStore(stream);
-                        var trackStore = audioManager.GetTrackStore(beatmapAssetStorage);
-                        gameTrack = trackStore.Get(beatpack.MusicPath);
+                        ZipArchiveEntry entry = null;
                         
-                        if (gameTrack != null)
+                        // Try BackgroundImagePath first (old format)
+                        if (!string.IsNullOrEmpty(beatpack.BackgroundImagePath))
                         {
-                            gameTrack.Looping = false; // Don't loop gameplay music
-                            Logger.Log($"[GameScreen] Loaded audio track: {beatpack.MusicPath}", LoggingTarget.Runtime, LogLevel.Important);
+                            entry = archive.GetEntry(beatpack.BackgroundImagePath);
                         }
-                        else
+                        
+                        // Fallback to cover.jpg (new format)
+                        if (entry == null)
                         {
-                            Logger.Log($"[GameScreen] Failed to load audio track: {beatpack.MusicPath}", LoggingTarget.Runtime, LogLevel.Error);
+                            entry = archive.GetEntry("cover.jpg");
+                        }
+                        
+                        if (entry != null)
+                        {
+                            using (var imageStream = entry.Open())
+                            using (var memoryStream = new MemoryStream())
+                            {
+                                imageStream.CopyTo(memoryStream);
+                                memoryStream.Position = 0;
+                                var texture = Texture.FromStream(renderer, memoryStream);
+                                backgroundSprite.Texture = texture;
+                            }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, "Failed to load game audio");
+                    Logger.Error(ex, "Failed to load background image");
                 }
-            }
-            
-            // Load background image
-            if (!string.IsNullOrEmpty(beatpack.BackgroundImagePath))
-            {
-                Schedule(() =>
-                {
-                    try
-                    {
-                        using (var stream = File.OpenRead(beatpack.FilePath))
-                        using (var archive = new ZipArchive(stream))
-                        {
-                            var entry = archive.GetEntry(beatpack.BackgroundImagePath);
-                            if (entry != null)
-                            {
-                                using (var imageStream = entry.Open())
-                                using (var memoryStream = new MemoryStream())
-                                {
-                                    imageStream.CopyTo(memoryStream);
-                                    memoryStream.Position = 0;
-                                    var texture = Texture.FromStream(renderer, memoryStream);
-                                    backgroundSprite.Texture = texture;
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex, "Failed to load background image");
-                    }
-                });
-            }
+            });
 
             // Initialize center word and previews from beatmap
             try
@@ -856,6 +867,10 @@ namespace TypeBeat.Game
                 Logger.Log("[GameScreen] Disposed gameplay audio track", LoggingTarget.Runtime, LogLevel.Important);
             }
             
+            disposeCustomSampleResources();
+            customTypeBeatSample = null;
+            customSpaceSample = null;
+            
             this.FadeOut(300);
             return base.OnExiting(e);
         }
@@ -1005,21 +1020,9 @@ namespace TypeBeat.Game
             
             // Play sound effect
             if (keyChar == '/')
-            {
-                if (snareSound != null)
-                {
-                    var channel = snareSound.Play();
-                    if (channel != null) channel.Volume.Value = 1.0; // Max volume
-                }
-            }
+                playCustomOrDefault(snareSound, customSpaceSample);
             else
-            {
-                if (kickSound != null)
-                {
-                    var channel = kickSound.Play();
-                    if (channel != null) channel.Volume.Value = 1.0; // Max volume
-                }
-            }
+                playCustomOrDefault(kickSound, customTypeBeatSample);
             
             score.Apply(res.Judgement);
             UpdateScore(res.Judgement);
@@ -1055,6 +1058,90 @@ namespace TypeBeat.Game
             }
 
             return true;
+        }
+
+        private void loadCustomSounds()
+        {
+            // Load defaults first so we always have a fallback.
+            kickSound = audioManager.Samples.Get("Samples/Kick") ?? audioManager.Samples.Get("Kick.ogg");
+            snareSound = audioManager.Samples.Get("Samples/Snare") ?? audioManager.Samples.Get("Snare.ogg");
+
+            customTypeBeatSample = null;
+            customSpaceSample = null;
+
+            disposeCustomSampleResources();
+
+            if (beatpack?.CustomSounds?.Enabled != true)
+                return;
+
+            try
+            {
+                customSampleFileStream = File.OpenRead(beatpack.FilePath);
+                customSampleResourceStore = new ZipArchiveResourceStore(customSampleFileStream);
+                customSampleStore = audioManager.GetSampleStore(customSampleResourceStore);
+
+                var typeBeatSounds = beatpack.GetCustomSoundsForGamemode("TypeBeat").ToList();
+
+                foreach (var sound in typeBeatSounds)
+                {
+                    customTypeBeatSample = customSampleStore?.Get(sound.Path);
+                    if (customTypeBeatSample != null)
+                        break;
+                }
+
+                foreach (var sound in typeBeatSounds)
+                {
+                    var filename = sound.Filename?.ToLowerInvariant() ?? string.Empty;
+                    if (!filename.Contains("space"))
+                        continue;
+
+                    customSpaceSample = customSampleStore?.Get(sound.Path);
+                    if (customSpaceSample != null)
+                        break;
+                }
+
+                if (customSpaceSample == null)
+                {
+                    foreach (var sound in typeBeatSounds)
+                    {
+                        customSpaceSample = customSampleStore?.Get(sound.Path);
+                        if (customSpaceSample != null)
+                            break;
+                    }
+                }
+
+                Logger.Log($"[GameScreen] Custom sounds loaded - letters={customTypeBeatSample != null}, space={customSpaceSample != null}", LoggingTarget.Runtime, LogLevel.Important);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to load custom TypeBeat sounds; using defaults");
+                customTypeBeatSample = null;
+                customSpaceSample = null;
+                disposeCustomSampleResources();
+            }
+        }
+
+        private void disposeCustomSampleResources()
+        {
+            customSampleStore?.Dispose();
+            customSampleStore = null;
+
+            customSampleResourceStore?.Dispose();
+            customSampleResourceStore = null;
+
+            customSampleFileStream?.Dispose();
+            customSampleFileStream = null;
+        }
+
+        private void playCustomOrDefault(Sample fallbackSample, Sample customSample)
+        {
+            var sampleToPlay = customSample ?? fallbackSample;
+            if (sampleToPlay == null)
+                return;
+
+            var channel = sampleToPlay.Play();
+            if (channel != null)
+                channel.Volume.Value = 1.0;
         }
 
         private Container createPauseOverlay()

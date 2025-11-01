@@ -19,16 +19,12 @@ namespace TypeBeat.Game.Gameplay.Scheduling
         private List<WordSegment> allSegments = new List<WordSegment>();
         private readonly HashSet<Note> spawned = new HashSet<Note>();
         private readonly List<DrawableMusicNote> activeNotes = new List<DrawableMusicNote>();
-        private int currentNoteIndex = 0; // Tracks which note in the segment we're on
+        private int currentNoteIndex = 0;
 
-        /// <summary>
-        /// Spawn notes slightly before their StartTime to ensure smooth entry.
-        /// </summary>
+        public Note ExcludedVisualNote { get; set; }
+
         public double PreloadMs { get; set; } = 0;
 
-        /// <summary>
-        /// Offset to subtract from Clock.CurrentTime for gameplay timing.
-        /// </summary>
         public double TimeOffsetMs { get; set; } = 0;
 
         public TypeNoteScheduler(TypeNoteLayoutConfig layout)
@@ -98,6 +94,13 @@ namespace TypeBeat.Game.Gameplay.Scheduling
                 foreach (var n in segment.Notes)
                 {
                     if (spawned.Contains(n)) continue;
+
+                    // Skip the excluded note (first note cue shown separately)
+                    if (ExcludedVisualNote != null && n == ExcludedVisualNote)
+                    {
+                        spawned.Add(n); // Mark as spawned but don't create drawable
+                        continue;
+                    }
 
                     double spawnAt = n.StartTime - PreloadMs;
                     if (now >= spawnAt)

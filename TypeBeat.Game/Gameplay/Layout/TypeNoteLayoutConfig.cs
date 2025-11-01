@@ -5,6 +5,7 @@ namespace TypeBeat.Game.Gameplay.Layout
 {
     /// <summary>
     /// Defines the layout for the TypeNote (piano roll) visual style.
+    /// Supports unlimited octaves using dynamic calculation.
     /// </summary>
     public class TypeNoteLayoutConfig
     {
@@ -30,52 +31,76 @@ namespace TypeBeat.Game.Gameplay.Layout
         /// How many pixels to move *up* for each semitone (half-step).
         /// This is the "fixed vertical distance" you can adjust.
         /// </summary>
-        public float YStepPx { get; set; } = 10f;
+        public float YStepPx { get; set; } = 14f;
 
-        // --- Note Step Mapping ---
-        // This maps a note character string to a Y-axis "step" number.
-        // C0 is the base (0), C#0 is 1, D0 is 2, etc.
-        private static readonly Dictionary<string, int> note_steps = new Dictionary<string, int>
+        // --- Note Name to Y-Position Mapping ---
+        // Maps note names to their visual Y position (like a music sheet).
+        // Sharps share the same Y position as their natural notes.
+        // Only 7 positions per octave (C, D, E, F, G, A, B).
+        private static readonly Dictionary<string, int> note_offsets = new Dictionary<string, int>
         {
-            // Octave 0
-            { "C0", 0 },
-            { "C#0", 1 },
-            { "D0", 2 },
-            { "D#0", 3 },
-            { "E0", 4 },
-            { "F0", 5 },
-            { "F#0", 6 },
-            { "G0", 7 },
-            { "G#0", 8 },
-            { "A0", 9 },
-            { "A#0", 10 },
-            { "B0", 11 },
-            // Octave 1
-            { "C1", 12 },
-            { "C#1", 13 },
-            { "D1", 14 },
-            { "D#1", 15 },
-            { "E1", 16 },
-            { "F1", 17 },
-            { "F#1", 18 },
-            { "G1", 19 },
-            { "G#1", 20 },
-            { "A1", 21 },
-            { "A#1", 22 },
-            { "B1", 23 }
+            { "C", 0 },
+            { "C#", 0 },  // Same line as C
+            { "D", 1 },
+            { "D#", 1 },  // Same line as D
+            { "E", 2 },
+            { "F", 3 },
+            { "F#", 3 },  // Same line as F
+            { "G", 4 },
+            { "G#", 4 },  // Same line as G
+            { "A", 5 },
+            { "A#", 5 },  // Same line as A
+            { "B", 6 }
         };
 
         /// <summary>
-        /// Gets the Y-step (0 for C0, 1 for C#0, etc.) for a given note.
-        /// Returns 0 if the note is not recognized.
+        /// Gets the Y-step for a given note, treating sharps as the same position as their natural notes.
+        /// This creates a music-sheet appearance where C and C# are on the same line.
+        /// Now supports unlimited octaves dynamically.
+        /// Format: "C0", "D#2", "G5", etc.
+        /// Returns 0 for C0, 1 for D0, 2 for E0, 7 for C1, etc.
         /// </summary>
         public static int GetYStep(string character)
         {
-            if (note_steps.TryGetValue(character, out int step))
+            if (string.IsNullOrEmpty(character) || character == "/")
+                return 0;
+
+            // Parse note name and octave
+            // Format: [Note][#]?[Octave]
+            // Examples: "C0", "C#0", "D2", "G#5"
+            
+            int octave = 0;
+            string noteName = "";
+            
+            // Check if it ends with a sharp and a digit
+            if (character.Length >= 3 && character[character.Length - 2] == '#')
             {
-                return step;
+                // Format: "C#0", "D#2"
+                noteName = character.Substring(0, 2); // "C#", "D#"
+                if (int.TryParse(character.Substring(2), out octave))
+                {
+                    // Successfully parsed
+                }
             }
-            return 0; // Default to base C0 position
+            else if (character.Length >= 2)
+            {
+                // Format: "C0", "D2", "G5"
+                noteName = character.Substring(0, 1); // "C", "D", "G"
+                if (int.TryParse(character.Substring(1), out octave))
+                {
+                    // Successfully parsed
+                }
+            }
+
+            // Look up the note offset
+            if (note_offsets.TryGetValue(noteName, out int offset))
+            {
+                // Calculate the total step: octave * 7 + offset (7 natural notes per octave)
+                return (octave * 7) + offset;
+            }
+
+            // Default to 0 if parsing failed
+            return 0;
         }
 
         // --- Helper Methods ---
@@ -91,6 +116,30 @@ namespace TypeBeat.Game.Gameplay.Layout
             float yBase = drawSize.Y * YBaseFraction;
             float yOffset = noteStep * YStepPx;
             return yBase - yOffset; // Subtract offset so higher notes go *up*
+        }
+
+        /// <summary>
+        /// Gets the stem direction offset for a note.
+        /// Notes B0 and higher have stems pointing up, requiring Y-offset correction.
+        /// Returns the pixel offset to apply (negative = move up, positive = move down).
+        /// </summary>
+        public static float GetStemDirectionOffset(string character)
+        {
+            if (string.IsNullOrEmpty(character))
+                return 0;
+
+            // Parse the note to determine if it's B0 or higher
+            int yStep = GetYStep(character);
+            
+            // B0 has yStep = 6 (octave 0, offset 6)
+            // Any note with yStep >= 6 needs correction (B0, C1, D1, etc.)
+            if (yStep >= 6)
+            {
+                // Stem-up notes: move down to align the circular notehead
+                return 20f; // Adjust this value based on your note image stem length
+            }
+
+            return 0; // C0-A0 are already correctly positioned
         }
     }
 }

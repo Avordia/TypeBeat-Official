@@ -263,40 +263,67 @@ namespace TypeBeat.Game
                         Loop = true, //
                     };
                 }
-                else if (!string.IsNullOrEmpty(newBeatpack.BackgroundImagePath) && beatmapAssetStorage.Exists(newBeatpack.BackgroundImagePath))
-                {
-                    var textureStore = new TextureStore(host.Renderer, new TextureLoaderStore(beatmapAssetStorage));
-                    background = new Sprite
-                    {   
-                        RelativeSizeAxes = Axes.Both,
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        FillMode = FillMode.Fill, 
-                        Texture = textureStore.Get(newBeatpack.BackgroundImagePath)
-                    };
-                }
                 else
                 {
-                    background = new Box { RelativeSizeAxes = Axes.Both, Colour = Colour4.Black };
+                    // Try to load background image (old format or new format)
+                    var textureStore = new TextureStore(host.Renderer, new TextureLoaderStore(beatmapAssetStorage));
+                    Texture backgroundTexture = null;
+                    
+                    // Try BackgroundImagePath first (old format)
+                    if (!string.IsNullOrEmpty(newBeatpack.BackgroundImagePath) && beatmapAssetStorage.Exists(newBeatpack.BackgroundImagePath))
+                    {
+                        backgroundTexture = textureStore.Get(newBeatpack.BackgroundImagePath);
+                    }
+                    
+                    // Fallback to cover.jpg (new format)
+                    if (backgroundTexture == null && beatmapAssetStorage.Exists("cover.jpg"))
+                    {
+                        backgroundTexture = textureStore.Get("cover.jpg");
+                    }
+                    
+                    if (backgroundTexture != null)
+                    {
+                        background = new Sprite
+                        {   
+                            RelativeSizeAxes = Axes.Both,
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            FillMode = FillMode.Fill, 
+                            Texture = backgroundTexture
+                        };
+                    }
+                    else
+                    {
+                        background = new Box { RelativeSizeAxes = Axes.Both, Colour = Colour4.Black };
+                    }
                 }
 
                 backgroundContainer.Child = background;
 
                 track?.Stop();
                 var trackStore = audioManager.GetTrackStore(beatmapAssetStorage);
+                
+                // Try MusicPath first (old format or manifest-specified path)
                 if (!string.IsNullOrEmpty(newBeatpack.MusicPath))
                 {
                     track = trackStore.Get(newBeatpack.MusicPath);
-                    if (track != null)
+                }
+                
+                // Fallback to audio.mp3 (new format default)
+                if (track == null)
+                {
+                    track = trackStore.Get("audio.mp3");
+                }
+                
+                if (track != null)
+                {
+                    track.Looping = true;
+                    mainLogo.SetTrack(track);
+                    
+                    // Only auto-start if we should (i.e., if MainScreen is active)
+                    if (shouldAutoPlayTrack)
                     {
-                        track.Looping = true;
-                        mainLogo.SetTrack(track);
-                        
-                        // Only auto-start if we should (i.e., if MainScreen is active)
-                        if (shouldAutoPlayTrack)
-                        {
-                            track.Start();
-                        }
+                        track.Start();
                     }
                 }
 

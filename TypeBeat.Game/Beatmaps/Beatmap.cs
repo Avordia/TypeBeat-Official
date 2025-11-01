@@ -1,26 +1,32 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-#nullable enable
-
 namespace TypeBeat.Game.Beatmaps
 {
     public class Beatmap
     {
-        [JsonProperty("Artist")]
-        public string Artist { get; set; } = string.Empty;
-
+        // --- ADDED ---
+        [JsonProperty("beatmap_id")]
+        public string? OnlineBeatmapID { get; set; } // Null for drafts
+        // --- END ADD ---
+        
         [JsonProperty("Title")]
-        public string Title { get; set; } = string.Empty;
+        public string Title { get; set; }
 
-        [JsonProperty("BPM")]
-        public double BPM { get; set; }
+        [JsonProperty("Artist")]
+        public string Artist { get; set; }
+
+        [JsonProperty("DifficultyName")]
+        public string DifficultyName { get; set; }
+
+        [JsonProperty("StarRating")]
+        public double StarRating { get; set; }
 
         [JsonProperty("Creators")]
         public List<string> Creators { get; set; } = new List<string>();
 
         [JsonProperty("Source")]
-        public string Source { get; set; } = string.Empty;
+        public string Source { get; set; }
 
         [JsonProperty("Tags")]
         public List<string> Tags { get; set; } = new List<string>();
@@ -28,35 +34,37 @@ namespace TypeBeat.Game.Beatmaps
         [JsonProperty("PreviewTime")]
         public int PreviewTime { get; set; }
 
-        [JsonProperty("DifficultyName")]
-        public string DifficultyName { get; set; } = string.Empty;
-        public float StarRating { get; set; }
-
         [JsonProperty("Gamemode")]
-        public string Gamemode { get; set; } = string.Empty;
+        public string Gamemode { get; set; }
 
-        [JsonProperty("Sounds")]
-        public string Sounds { get; set; } = string.Empty;
-
+        // Unique attributes for TypeNote
         [JsonProperty("MusicKey")]
-        public string MusicKey { get; set; } = string.Empty;
+        public string? MusicKey { get; set; }
 
+        [JsonProperty("Clef")]
+        public string? Clef { get; set; }
+
+        [JsonProperty("BPM")]
+        public double Bpm { get; set; }
+        
+        // Optional media fields for site/export
         [JsonProperty("BackgroundImage")]
-        public string BackgroundImage { get; set; } = string.Empty;
+        public string? BackgroundImage { get; set; }
 
         [JsonProperty("Video")]
-        public string Video { get; set; } = string.Empty;
+        public string? Video { get; set; }
+        
+        // These index fields may be set when reading from a beatpack manifest
+        [JsonProperty("audio_index")]
+        public int? AudioIndex { get; set; }
+        
+        [JsonProperty("background_index")]
+        public int? BackgroundIndex { get; set; }
 
         [JsonProperty("MapData")]
         public List<WordSegment> MapData { get; set; } = new List<WordSegment>();
 
-        [JsonProperty("Audio")]
-        public string Audio { get; set; } = string.Empty;
-
-        [JsonProperty("OnlineBeatmapID")]
-        public long? OnlineBeatmapID { get; set; } = null;
-
-        [JsonProperty("CreatorID")]
-        public string? CreatorID { get; set; } = null;
+        [JsonIgnore]
+        public string BeatmapFileName { get; set; }
     }
 }

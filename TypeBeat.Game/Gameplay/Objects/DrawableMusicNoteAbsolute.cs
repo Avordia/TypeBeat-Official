@@ -5,25 +5,26 @@ using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osuTK;
 using TypeBeat.Game.Beatmaps;
-using TypeBeat.Game.Gameplay.Appearance;
 using TypeBeat.Game.Gameplay.Layout;
+using TypeBeat.Game.Gameplay.Appearance;
 using osu.Framework.Logging;
 
 namespace TypeBeat.Game.Gameplay.Objects
 {
     /// <summary>
-    /// Visual representation of a single scrolling music note (TypeNote style).
+    /// Visual representation of a single scrolling music note (TypeNote style) that uses ABSOLUTE timing.
+    /// startAbsMs/endAbsMs are compared directly to Clock.CurrentTime, independent of gameplay offset.
     /// </summary>
-    public partial class DrawableMusicNote : CompositeDrawable
+    public partial class DrawableMusicNoteAbsolute : CompositeDrawable
     {
-        private readonly double startTime;
-        private readonly double endTime;
+        private readonly double startAbsMs;
+        private readonly double endAbsMs;
         private readonly string character;
         private readonly int noteYStep;
         private readonly TypeNoteLayoutConfig layout;
 
-        public double TimeOffsetMs { get; set; } = 0;
         private bool wasHit = false;
+        private bool hasLoggedFirstUpdate = false;
 
         private Sprite noteSprite;
         private SpriteText sharpSymbol;
@@ -32,13 +33,12 @@ namespace TypeBeat.Game.Gameplay.Objects
         [Resolved]
         private TextureStore textures { get; set; } = null!;
 
-        public DrawableMusicNote(Note note, TypeNoteLayoutConfig layout, double timeOffsetMs)
+        public DrawableMusicNoteAbsolute(double startAbsMs, double endAbsMs, string character, TypeNoteLayoutConfig layout)
         {
-            this.startTime = note.StartTime;
-            this.endTime = note.EndTime;
-            this.character = note.Character;
+            this.startAbsMs = startAbsMs;
+            this.endAbsMs = endAbsMs;
+            this.character = character;
             this.layout = layout;
-            this.TimeOffsetMs = timeOffsetMs;
 
             // Check if this is a sharp note
             this.isSharp = character.Contains('#');
@@ -74,7 +74,7 @@ namespace TypeBeat.Game.Gameplay.Objects
                         Colour = Colour4.White,
                         Alpha = 0, // Hidden by default, shown only for sharps
                         X = 30, // Position to the right of the note
-                        Y = -8 
+                        Y = -8 // Slightly up
                     }
                 }
             };
@@ -91,23 +91,18 @@ namespace TypeBeat.Game.Gameplay.Objects
             
             // Get the mapped texture name for the NATURAL note
             string textureName = NoteTextureMapper.GetTextureName(naturalNote);
-
-            // Build the full path
             string texturePath = $"images/musicNotes/{textureName}";
-            Logger.Log($"[DrawableMusicNote] Note '{character}' → natural '{naturalNote}' → texture '{textureName}'. Path: {texturePath}", LoggingTarget.Runtime, LogLevel.Debug);
 
             var tex = textures.Get(texturePath);
 
             if (tex == null)
             {
-                // Try fallback with .png
                 tex = textures.Get($"{texturePath}.png");
             }
             
             if (tex == null)
             {
-                // Fallback for missing textures
-                Logger.Log($"[DrawableMusicNote] Texture not found at path: {texturePath}. Using default.", LoggingTarget.Runtime, LogLevel.Error);
+                Logger.Log($"[DrawableMusicNoteAbsolute] Texture not found at path: {texturePath}. Using default.", LoggingTarget.Runtime, LogLevel.Error);
                 tex = textures.Get("images/A1");
             }
 
@@ -118,10 +113,12 @@ namespace TypeBeat.Game.Gameplay.Objects
             {
                 sharpSymbol.Alpha = 1;
             }
+            
+            Logger.Log($"[DrawableMusicNoteAbsolute] Loaded texture for note '{character}' startAbs={startAbsMs} endAbs={endAbsMs}", LoggingTarget.Runtime, LogLevel.Important);
         }
 
         /// <summary>
-        /// Called by the scheduler when the note is hit.
+        /// Called when the note is hit.
         /// </summary>
         public void OnHit()
         {
@@ -135,23 +132,31 @@ namespace TypeBeat.Game.Gameplay.Objects
 
             if (wasHit) return;
 
-            double t = Clock.CurrentTime - TimeOffsetMs;
+            double nowAbs = Clock.CurrentTime;
+            float width = DrawSize.X;
+            float height = DrawSize.Y;
+            var size = new Vector2(width, height);
+
+            if (!hasLoggedFirstUpdate)
+            {
+                hasLoggedFirstUpdate = true;
+                Logger.Log($"[DrawableMusicNoteAbsolute] First update: nowAbs={nowAbs:F1} startAbs={startAbsMs:F1} endAbs={endAbsMs:F1}", LoggingTarget.Runtime, LogLevel.Important);
+            }
 
             // Before spawn time, stay hidden
-            if (t < startTime)
+            if (nowAbs < startAbsMs)
             {
                 InternalChild.Alpha = 0;
                 return;
             }
 
-            // Calculate progress (0.0 at startTime, 1.0 at endTime)
-            double duration = System.Math.Max(1, endTime - startTime);
-            double p = System.Math.Clamp((t - startTime) / duration, 0.0, 1.0);
+            // Calculate progress (0.0 at startAbsMs, 1.0 at endAbsMs)
+            double duration = System.Math.Max(1, endAbsMs - startAbsMs);
+            double p = System.Math.Clamp((nowAbs - startAbsMs) / duration, 0.0, 1.0);
 
             // Note has passed its end time, expire it
             if (p >= 1)
             {
-                // We don't fade, it just expires (missed)
                 Expire();
                 return;
             }
@@ -163,9 +168,9 @@ namespace TypeBeat.Game.Gameplay.Objects
                 InternalChild.Alpha = 1;
 
             // Get positions
-            float spawnX = layout.GetSpawnX(DrawSize);
-            float destX = layout.GetDestinationX(DrawSize); // This is the "hit line"
-            float y = layout.GetNoteY(DrawSize, noteYStep);
+            float spawnX = layout.GetSpawnX(size);
+            float destX = layout.GetDestinationX(size);
+            float y = layout.GetNoteY(size, noteYStep);
 
             // Apply stem direction offset for B0 and higher notes
             float stemOffset = TypeNoteLayoutConfig.GetStemDirectionOffset(character);

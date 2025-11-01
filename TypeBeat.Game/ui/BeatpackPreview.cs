@@ -223,7 +223,7 @@ namespace TypeBeat.Game.Ui
                 difficultyNameText.Text = (beatpack.Beatmap.DifficultyName ?? "NORMAL").ToUpperInvariant();
                 
                 // Update star rating and bar
-                float starRating = beatpack.Beatmap.StarRating;
+                float starRating = (float)beatpack.Beatmap.StarRating;
                 starRatingText.Text = $"STAR RATING: {starRating:F1}";
                 
                 // Calculate bar fill percentage (max is 10 stars)
@@ -239,9 +239,6 @@ namespace TypeBeat.Game.Ui
                 playButton.FadeIn(300, Easing.OutQuint);
             }
 
-            if (string.IsNullOrEmpty(beatpack.BackgroundImagePath))
-                return;
-
             // Load texture asynchronously
             Schedule(() =>
             {
@@ -252,7 +249,20 @@ namespace TypeBeat.Game.Ui
                     using (var stream = File.OpenRead(beatpack.FilePath))
                     using (var archive = new ZipArchive(stream))
                     {
-                        var entry = archive.GetEntry(beatpack.BackgroundImagePath);
+                        ZipArchiveEntry entry = null;
+                        
+                        // Try BackgroundImagePath first (old format)
+                        if (!string.IsNullOrEmpty(beatpack.BackgroundImagePath))
+                        {
+                            entry = archive.GetEntry(beatpack.BackgroundImagePath);
+                        }
+                        
+                        // Fallback to cover.jpg (new format)
+                        if (entry == null)
+                        {
+                            entry = archive.GetEntry("cover.jpg");
+                        }
+                        
                         if (entry != null)
                         {
                             using (var imageStream = entry.Open())

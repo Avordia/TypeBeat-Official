@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -9,6 +10,21 @@ using System.Diagnostics;
 
 namespace TypeBeat.Game.Filehandling
 {
+    /// <summary>
+    /// Manifest structure from new .tbbp format
+    /// </summary>
+    public class BeatpackManifest
+    {
+        [JsonProperty("audio_files")]
+        public List<AudioFileInfo> AudioFiles { get; set; }
+        
+        [JsonProperty("background_images")]
+        public List<BackgroundInfo> BackgroundImages { get; set; }
+        
+        [JsonProperty("custom_sounds")]
+        public CustomSoundsConfig CustomSounds { get; set; }
+    }
+    
     public static class BeatmapParser
     {
         public static Beatpack ParseBeatpack(string filePath)
@@ -76,14 +92,51 @@ namespace TypeBeat.Game.Filehandling
                     // --- DEBUG LINE ---
                     Debug.WriteLine($"[BeatmapParser] Finished parsing. Total beatmaps loaded: {beatpack.Beatmaps.Count}");
 
-                    var musicEntry = archive.Entries.FirstOrDefault(e => e.Name.Equals("audio.ogg", StringComparison.OrdinalIgnoreCase));
-                    beatpack.MusicPath = musicEntry?.Name; 
+                    // Try to load manifest.json for new format
+                    var manifestEntry = archive.GetEntry("manifest.json");
+                    if (manifestEntry != null)
+                    {
+                        Debug.WriteLine($"[BeatmapParser] Found manifest.json - loading new format");
+                        using (var stream = manifestEntry.Open())
+                        using (var reader = new StreamReader(stream))
+                        {
+                            var json = reader.ReadToEnd();
+                            var manifest = JsonConvert.DeserializeObject<BeatpackManifest>(json);
+                            
+                            if (manifest != null)
+                            {
+                                beatpack.AudioFiles = manifest.AudioFiles ?? new List<AudioFileInfo>();
+                                beatpack.BackgroundImages = manifest.BackgroundImages ?? new List<BackgroundInfo>();
+                                beatpack.CustomSounds = manifest.CustomSounds ?? new CustomSoundsConfig();
 
-                    var backgroundEntry = archive.Entries.FirstOrDefault(e =>
-                        e.Name.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                        e.Name.EndsWith(".png", StringComparison.OrdinalIgnoreCase));
+                                // Set legacy paths for backward compatibility with existing consumers
+                                if (beatpack.AudioFiles.Any())
+                                    beatpack.MusicPath = beatpack.AudioFiles[0].Path;
 
-                    beatpack.BackgroundImagePath = backgroundEntry?.Name;
+                                if (beatpack.BackgroundImages.Any())
+                                    beatpack.BackgroundImagePath = beatpack.BackgroundImages[0].Path;
+
+                                Debug.WriteLine($"[BeatmapParser] Loaded {beatpack.AudioFiles.Count} audio files, {beatpack.BackgroundImages.Count} backgrounds");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[BeatmapParser] No manifest.json - using old format");
+                        // OLD FORMAT: Look for single audio file (try .mp3 first, then .ogg)
+                        var musicEntry = archive.Entries.FirstOrDefault(e => e.Name.Equals("audio.mp3", StringComparison.OrdinalIgnoreCase));
+                        if (musicEntry == null)
+                        {
+                            musicEntry = archive.Entries.FirstOrDefault(e => e.Name.Equals("audio.ogg", StringComparison.OrdinalIgnoreCase));
+                        }
+                        beatpack.MusicPath = musicEntry?.Name; 
+
+                        var backgroundEntry = archive.Entries.FirstOrDefault(e =>
+                            e.Name.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                            e.Name.EndsWith(".png", StringComparison.OrdinalIgnoreCase));
+
+                        beatpack.BackgroundImagePath = backgroundEntry?.Name;
+                    }
 
                     beatpack.VideoPath = archive.Entries.FirstOrDefault(e => e.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))?.Name;
 

@@ -15,8 +15,11 @@ namespace TypeBeat.Game.Online
     [Table("scores")]
     public class ScoreEntry : BaseModel
     {
+        // --- CHANGED ---
+        // Changed from 'long' to 'string' to match Supabase's UUIDs
         [Column("beatmap_id")]
-        public long BeatmapId { get; set; }
+        public string BeatmapId { get; set; } = string.Empty;
+        // --- END CHANGE ---
 
         [Column("player_id")]
         public string PlayerId { get; set; } = string.Empty;
@@ -46,7 +49,10 @@ namespace TypeBeat.Game.Online
         /// Submit a score to the database
         /// </summary>
         public async Task<(bool success, string message)> SubmitScoreAsync(
-            long beatmapId,
+            // --- CHANGED ---
+            // Changed from 'long' to 'string?' to accept the OnlineBeatmapID
+            string? beatmapId,
+            // --- END CHANGE ---
             string playerId,
             long score,
             double accuracy,
@@ -60,14 +66,18 @@ namespace TypeBeat.Game.Online
                     return (false, "Backend not available");
                 }
 
-                if (beatmapId <= 0)
+                // --- CHANGED ---
+                // This now checks if the ID is null or empty, which correctly
+                // skips draft maps.
+                if (string.IsNullOrEmpty(beatmapId))
                 {
                     return (false, "Invalid beatmap - this beatmap is not uploaded online");
                 }
+                // --- END CHANGE ---
 
                 var scoreEntry = new ScoreEntry
                 {
-                    BeatmapId = beatmapId,
+                    BeatmapId = beatmapId, // This is now a string
                     PlayerId = playerId,
                     Score = score,
                     Accuracy = accuracy,
@@ -101,17 +111,19 @@ namespace TypeBeat.Game.Online
         /// <summary>
         /// Get the player's best score for a beatmap
         /// </summary>
-        public async Task<ScoreEntry?> GetPersonalBestAsync(long beatmapId, string playerId)
+        public async Task<ScoreEntry?> GetPersonalBestAsync(string? beatmapId, string playerId) // <-- Also changed this parameter to string?
         {
             try
             {
-                if (BackendClient.Client == null || beatmapId <= 0)
+                // --- CHANGED ---
+                if (BackendClient.Client == null || string.IsNullOrEmpty(beatmapId))
                     return null;
+                // --- END CHANGE ---
 
                 var response = await BackendClient.Client
                     .From<ScoreEntry>()
                     .Select("*")
-                    .Filter("beatmap_id", Operator.Equals, beatmapId)
+                    .Filter("beatmap_id", Operator.Equals, beatmapId) // This filter now works with a string
                     .Filter("player_id", Operator.Equals, playerId)
                     .Order("score", Ordering.Descending)
                     .Limit(1)

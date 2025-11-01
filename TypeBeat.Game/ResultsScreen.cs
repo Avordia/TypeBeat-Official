@@ -180,7 +180,7 @@ namespace TypeBeat.Game
             };
 
             // Set initial status text
-            if (!beatmap.OnlineBeatmapID.HasValue || beatmap.OnlineBeatmapID <= 0)
+            if (string.IsNullOrEmpty(beatmap.OnlineBeatmapID))
             {
                 statusText.Text = "Local beatmap - scores cannot be submitted";
                 submitButton.Action = null; // Disable submit
@@ -245,7 +245,7 @@ namespace TypeBeat.Game
                 return;
             }
 
-            if (!beatmap.OnlineBeatmapID.HasValue || beatmap.OnlineBeatmapID <= 0)
+            if (string.IsNullOrEmpty(beatmap.OnlineBeatmapID))
             {
                 statusText.Text = "This is a local beatmap - cannot submit score";
                 return;
@@ -266,7 +266,7 @@ namespace TypeBeat.Game
             submitButton.Action = null; // Disable button during submission
 
             var result = await scoreService.SubmitScoreAsync(
-                beatmap.OnlineBeatmapID.Value,
+                beatmap.OnlineBeatmapID,
                 authService.CurrentUser.Value!.Id,
                 finalScore.TotalScore,
                 finalScore.GetAccuracyPercent(),

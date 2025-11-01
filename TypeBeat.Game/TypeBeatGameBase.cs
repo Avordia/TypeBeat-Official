@@ -1,4 +1,5 @@
 using osu.Framework.Allocation;
+using osu.Framework.Audio;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Textures; // Add this using directive
@@ -33,8 +34,7 @@ namespace TypeBeat.Game
             dependencies.CacheAs(new TextureStore(Host.Renderer, new TextureLoaderStore(Resources)));
             Resources.AddStore(new DllResourceStore(TypeBeatResources.ResourceAssembly));
             
-            // Note: Audio.Samples automatically uses the game's Resources store
-            // No need to manually add stores - it should work if Resources are set up correctly
+            // Note: Audio.Samples automatically uses Resources store
             
             // Add all font families
             // Kodchasan regular and bold variants

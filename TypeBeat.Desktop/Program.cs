@@ -22,7 +22,6 @@ namespace TypeBeat.Desktop
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Warning: Could not register file associations: {ex.Message}");
-                    // Continue anyway - file associations are not critical for running the game
                 }
             }
 
