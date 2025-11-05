@@ -91,26 +91,15 @@ namespace TypeBeat.Game.Gameplay.Layout
                     // Successfully parsed
                 }
             }
-
-            // Look up the note offset
             if (note_offsets.TryGetValue(noteName, out int offset))
             {
-                // Calculate the total step: octave * 7 + offset (7 natural notes per octave)
                 return (octave * 7) + offset;
             }
-
-            // Default to 0 if parsing failed
             return 0;
         }
 
-        // --- Helper Methods ---
-
         public float GetSpawnX(Vector2 drawSize) => drawSize.X * SpawnXFraction;
         public float GetDestinationX(Vector2 drawSize) => drawSize.X * DestinationXFraction;
-
-        /// <summary>
-        /// Calculates the final Y-pixel coordinate for a note.
-        /// </summary>
         public float GetNoteY(Vector2 drawSize, int noteStep)
         {
             float yBase = drawSize.Y * YBaseFraction;
@@ -136,10 +125,10 @@ namespace TypeBeat.Game.Gameplay.Layout
             if (yStep >= 6)
             {
                 // Stem-up notes: move down to align the circular notehead
-                return 20f; // Adjust this value based on your note image stem length
+                return 39.5f; // Adjust this value based on your note image stem length
             }
 
-            return 0; // C0-A0 are already correctly positioned
+            return 2.9f; // C0-A0 are already correctly positioned
         }
     }
 }

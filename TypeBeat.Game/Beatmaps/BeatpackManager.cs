@@ -99,5 +99,59 @@ namespace TypeBeat.Game.Beatmaps
             currentIndex--;
             CurrentBeatpack.Value = beatpacks[currentIndex];
         }
+        
+        public IReadOnlyList<Beatpack> GetAllBeatpacks()
+        {
+            return beatpacks.AsReadOnly();
+        }
+        
+        public void RefreshBeatpacks(GameHost host)
+        {
+            Logger.Log("Refreshing beatpack list...");
+            
+            var songsStorage = host.Storage.GetStorageForDirectory("Songs");
+            var files = songsStorage.GetFiles(".", "*.tbbp");
+            
+            // Check for new beatpacks
+            foreach (var file in files)
+            {
+                var fullPath = songsStorage.GetFullPath(file);
+                
+                // Skip if already loaded
+                if (beatpacks.Any(b => b.FilePath == fullPath))
+                    continue;
+                
+                try
+                {
+                    if (!System.IO.File.Exists(fullPath))
+                        continue;
+                    
+                    var fileInfo = new System.IO.FileInfo(fullPath);
+                    if (fileInfo.Length == 0)
+                        continue;
+                    
+                    var beatpack = BeatmapParser.ParseBeatpack(fullPath);
+                    if (beatpack != null)
+                    {
+                        beatpacks.Add(beatpack);
+                        var songName = beatpack.Beatmap?.Title ?? Path.GetFileNameWithoutExtension(file);
+                        Logger.Log($"✓ Added new beatpack: {songName}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e, $"Failed to load new beatpack {file}");
+                }
+            }
+            
+            // Update current beatpack if needed
+            if (beatpacks.Any() && currentIndex < 0)
+            {
+                currentIndex = 0;
+                CurrentBeatpack.Value = beatpacks[currentIndex];
+            }
+            
+            Logger.Log($"Refresh complete. Total beatpacks: {beatpacks.Count}");
+        }
     }
 }

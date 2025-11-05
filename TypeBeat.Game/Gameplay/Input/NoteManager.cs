@@ -9,6 +9,13 @@ namespace TypeBeat.Game.Gameplay.Input
         private Beatmaps.Note[] allNotes = System.Array.Empty<Beatmaps.Note>();
         private int currentNoteIndex = 0;
 
+        /// <summary>
+        /// Optional early-hit guard: do not allow a note to be judged/consumed until
+        /// this many milliseconds before its EndTime. Useful for TypeNote to avoid mispresses.
+        /// 0 disables the guard (default behavior).
+        /// </summary>
+        public double EarlyHitGuardMs { get; set; } = 0;
+
         public void SetSegment(Beatmaps.WordSegment segment)
         {
             if (segment?.Notes == null)
@@ -37,9 +44,11 @@ namespace TypeBeat.Game.Gameplay.Input
             var currentNote = allNotes[currentNoteIndex];
 
             // 1. Define the "active window" (like in TypingManager)
-            // A key press is only considered if it's between the note's spawn and its miss window.
-            // We use EndTime for the late boundary because that's the arrival/judgement time.
-            double earlyBoundary = currentNote.StartTime;
+            // A key press is only considered if it's within the active window.
+            // For TypeNote, we additionally enforce an early-hit guard so judgement can only occur
+            // within [EndTime - EarlyHitGuardMs, EndTime + Window50].
+            // This avoids consuming notes due to very early key presses.
+            double earlyBoundary = Math.Max(currentNote.StartTime, currentNote.EndTime - EarlyHitGuardMs);
             double lateBoundary = currentNote.EndTime + hitWindows.Window50;
 
             if (currentTime < earlyBoundary || currentTime > lateBoundary)

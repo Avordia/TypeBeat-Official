@@ -7,6 +7,7 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Graphics.Video;
+using osu.Framework.Platform;
 using osu.Framework.Screens;
 using osu.Framework.Input.Events;
 using osuTK;
@@ -34,6 +35,7 @@ namespace TypeBeat.Game
 
     private string currentGamemode = "TypeBeat"; // Default gamemode
     private TextureStore textures;
+    private GameHost host;
 
     public SongSelectionScreen(BeatpackManager beatpackManager, Container backgroundContainer, MainScreen mainScreen, Track track)
         {
@@ -181,8 +183,14 @@ namespace TypeBeat.Game
             Logger.Log("==============================================", LoggingTarget.Runtime, LogLevel.Important);
 
             base.OnEntering(e);
+            
+            // Refresh beatpacks to show newly downloaded ones
+            beatpackManager?.RefreshBeatpacks(host);
 
             addBackground();
+            
+            // Refresh song list after adding background
+            refreshSongList();
 
             // Show the currently playing beatpack's background and difficulty
             if (beatpackManager.CurrentBeatpack.Value != null)
@@ -218,6 +226,12 @@ namespace TypeBeat.Game
         public override void OnResuming(ScreenTransitionEvent e)
         {
             base.OnResuming(e);
+            
+            Logger.Log("[SongSelection] Resuming - refreshing beatpack list", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Refresh beatpacks to show newly downloaded ones
+            beatpackManager?.RefreshBeatpacks(host);
+            refreshSongList();
             
             Logger.Log("[SongSelection] Resuming from GameScreen", LoggingTarget.Runtime, LogLevel.Important);
             var currentTrack = mainScreen.GetCurrentTrack();
@@ -314,9 +328,10 @@ namespace TypeBeat.Game
         }
 
         [BackgroundDependencyLoader]
-        private void load(TextureStore textures)
+        private void load(TextureStore textures, GameHost gameHost)
         {
             this.textures = textures;
+            this.host = gameHost;
             updateLogoTexture();
 
             // Wire up the play button in BeatpackPreview
@@ -355,6 +370,55 @@ namespace TypeBeat.Game
                     selectedThumbnail.IsSelected = true;
                 }
             }
+        }
+        
+        private void refreshSongList()
+        {
+            if (songThumbnailList == null) return;
+            
+            // Get the song container
+            var songContainer = (FillFlowContainer)songThumbnailList.Child;
+            if (songContainer == null) return;
+            
+            Logger.Log($"[SongSelection] Refreshing song list. Current count: {songContainer.Count}, Beatpacks: {beatpackManager.Beatpacks.Count}", LoggingTarget.Runtime, LogLevel.Important);
+            
+            // Clear existing thumbnails
+            songContainer.Clear();
+            selectedThumbnail = null;
+            
+            // Rebuild list with updated beatpacks
+            foreach (var beatpack in beatpackManager.Beatpacks)
+            {
+                var thumbnail = new SongThumbnail(beatpack, textures)
+                {
+                    Anchor = Anchor.CentreLeft,
+                    Origin = Anchor.CentreLeft
+                };
+
+                thumbnail.OnSelected += (selected) =>
+                {
+                    // Deselect previous thumbnail
+                    if (selectedThumbnail != null)
+                        selectedThumbnail.IsSelected = false;
+
+                    // Select new thumbnail
+                    selectedThumbnail = thumbnail;
+                    selectedThumbnail.IsSelected = true;
+
+                    handleSongSelected(selected);
+                };
+
+                songContainer.Add(thumbnail);
+
+                // Auto-select the currently playing beatpack
+                if (beatpackManager.CurrentBeatpack.Value == beatpack)
+                {
+                    selectedThumbnail = thumbnail;
+                    selectedThumbnail.IsSelected = true;
+                }
+            }
+            
+            Logger.Log($"[SongSelection] Song list refreshed. New count: {songContainer.Count}", LoggingTarget.Runtime, LogLevel.Important);
         }
 
         private void updateLogoTexture()

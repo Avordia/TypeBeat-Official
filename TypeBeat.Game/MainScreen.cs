@@ -42,6 +42,7 @@ namespace TypeBeat.Game
         private Header header;
         private Footer footer;
         private LoginOverlay loginOverlay;
+        private Container inDevelopmentOverlay;
         private AuthenticationService authService;
         
         private bool isInMenuMode;
@@ -82,6 +83,70 @@ namespace TypeBeat.Game
                     Depth = float.MinValue + 1,
                     Alpha = 0
                 },
+                inDevelopmentOverlay = new Container
+                {
+                    Name = "In Development Overlay",
+                    RelativeSizeAxes = Axes.Both,
+                    Depth = float.MinValue,
+                    Alpha = 0,
+                    Children = new Drawable[]
+                    {
+                        new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Colour = new Color4(0, 0, 0, 200)
+                        },
+                        new Container
+                        {
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Size = new Vector2(500, 300),
+                            Children = new Drawable[]
+                            {
+                                new Box
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Colour = new Color4(30, 30, 30, 255)
+                                },
+                                new Container
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Padding = new MarginPadding(20),
+                                    Children = new Drawable[]
+                                    {
+                                        new SpriteText
+                                        {
+                                            Anchor = Anchor.TopCentre,
+                                            Origin = Anchor.TopCentre,
+                                            Text = "🚧 IN DEVELOPMENT 🚧",
+                                            Font = new FontUsage("Inter", size: 32, weight: "Bold"),
+                                            Colour = new Color4(255, 165, 0, 255),
+                                            Y = 60
+                                        },
+                                        new SpriteText
+                                        {
+                                            Anchor = Anchor.Centre,
+                                            Origin = Anchor.Centre,
+                                            Text = "The Editor is coming soon!",
+                                            Font = new FontUsage("Inter", size: 20),
+                                            Colour = Color4.White,
+                                            Y = 20
+                                        },
+                                        new MenuButton("Close", new Color4(100, 100, 100, 255), 20f, dimensions: new Vector2(150, 40), onClick: () =>
+                                        {
+                                            inDevelopmentOverlay.FadeOut(200);
+                                        })
+                                        {
+                                            Anchor = Anchor.BottomCentre,
+                                            Origin = Anchor.BottomCentre,
+                                            Y = -20
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 new Container
                 {
                     Name = "Menu Buttons",
@@ -94,7 +159,7 @@ namespace TypeBeat.Game
                         {
                             Y = 0,
                             AutoSizeAxes = Axes.Both,
-                            Child = new MenuButton("Play", new Color4(255, 136, 0, 255), 24f, dimensions: new Vector2(220, 35), onClick: () => 
+                            Child = new MenuButton("Solo", new Color4(255, 136, 0, 255), 24f, dimensions: new Vector2(220, 35), onClick: () => 
                             {
                                 mainLogo.FadeOut(400);
                                 songTitleText.FadeOut(400);
@@ -119,7 +184,7 @@ namespace TypeBeat.Game
                         {
                             Y = 50,
                             AutoSizeAxes = Axes.Both,
-                            Child = new MenuButton("Create", new Color4(255, 0, 255, 255), 24f, dimensions: new Vector2(220, 35), onClick: () => 
+                            Child = new MenuButton("Multi", new Color4(135, 206, 235, 255), 24f, dimensions: new Vector2(220, 35), onClick: () =>
                             {
                                 // Check if user is logged in
                                 if (!authService.IsLoggedIn)
@@ -127,12 +192,7 @@ namespace TypeBeat.Game
                                     loginOverlay.Show();
                                     return;
                                 }
-
-                                // Stop the music before transitioning
-                                track?.Stop();
-                                shouldAutoPlayTrack = false;
-
-                                // Fade out UI elements
+                                
                                 mainLogo.FadeOut(400);
                                 songTitleText.FadeOut(400);
                                 menuPlayer.FadeOut(400);
@@ -143,8 +203,11 @@ namespace TypeBeat.Game
 
                                 this.Delay(400).Schedule(() =>
                                 {
-                                    // Navigate to editor dashboard
-                                    this.Push(new EditDashboardScreen());
+                                    // Disable auto-play when navigating away
+                                    shouldAutoPlayTrack = false;
+                                    
+                                    // Navigate to multiplayer screen
+                                    this.Push(new MultiplayerScreen());
                                 });
                             })
                         },
@@ -152,11 +215,39 @@ namespace TypeBeat.Game
                         {
                             Y = 100,
                             AutoSizeAxes = Axes.Both,
-                            Child = new MenuButton("Explore", new Color4(255, 85, 85, 255), 24f, dimensions: new Vector2(220, 35))
+                            Child = new MenuButton("Create", new Color4(100, 100, 100, 255), 24f, dimensions: new Vector2(220, 35), onClick: () => 
+                            {
+                                // Show In Development overlay
+                                inDevelopmentOverlay.FadeIn(200);
+                            })
                         },
                         new Container
                         {
                             Y = 150,
+                            AutoSizeAxes = Axes.Both,
+                            Child = new MenuButton("Explore", new Color4(255, 85, 85, 255), 24f, dimensions: new Vector2(220, 35), onClick: () =>
+                            {
+                                mainLogo.FadeOut(400);
+                                songTitleText.FadeOut(400);
+                                menuPlayer.FadeOut(400);
+                                frameworkCredit.FadeOut(400);
+
+                                var menuButtonsContainer = InternalChildren.OfType<Container>().FirstOrDefault(c => c.Name == "Menu Buttons");
+                                menuButtonsContainer?.FadeOut(400);
+
+                                this.Delay(400).Schedule(() =>
+                                {
+                                    // Disable auto-play when navigating away
+                                    shouldAutoPlayTrack = false;
+                                    
+                                    // Navigate to exploration screen
+                                    this.Push(new ExplorationScreen());
+                                });
+                            })
+                        },
+                        new Container
+                        {
+                            Y = 200,
                             AutoSizeAxes = Axes.Both,
                             Child = new MenuButton("Options", new Color4(102, 102, 255, 255), 24f, dimensions: new Vector2(220, 35))
                         }
@@ -231,6 +322,56 @@ namespace TypeBeat.Game
 
         private void beatpackChanged(ValueChangedEvent<Beatpack> e)
         {
+            // Don't update background if MainScreen is suspended (e.g., SongSelectionScreen is active)
+            // SongSelectionScreen borrows the backgroundContainer
+            if (this.GetChildScreen() != null)
+            {
+                Logger.Log("[MainScreen] Skipping background update - screen is suspended", LoggingTarget.Runtime, LogLevel.Important);
+                
+                // Still update the track and song title
+                var beatpack = e.NewValue;
+                if (beatpack?.Beatmap != null && !string.IsNullOrEmpty(beatpack.FilePath))
+                {
+                    var songTitle = beatpack.Beatmap?.Title;
+                    var songArtist = beatpack.Beatmap?.Artist;
+                    songTitleText.Text = string.Join(" - ", new[] { songArtist, songTitle }.Where(s => !string.IsNullOrEmpty(s)));
+                    
+                    var beatpackPath = beatpack.FilePath;
+                    using (var stream = File.OpenRead(beatpackPath))
+                    using (var beatmapAssetStorage = new ZipArchiveResourceStore(stream))
+                    {
+                        track?.Stop();
+                        var trackStore = audioManager.GetTrackStore(beatmapAssetStorage);
+                        
+                        // Try MusicPath first (old format or manifest-specified path)
+                        if (!string.IsNullOrEmpty(beatpack.MusicPath))
+                        {
+                            track = trackStore.Get(beatpack.MusicPath);
+                        }
+                        
+                        // Fallback to audio.mp3 (new format default)
+                        if (track == null)
+                        {
+                            track = trackStore.Get("audio.mp3");
+                        }
+                        
+                        if (track != null)
+                        {
+                            track.Looping = true;
+                            mainLogo.SetTrack(track);
+                            
+                            // Only auto-start if we should (i.e., if MainScreen is active)
+                            if (shouldAutoPlayTrack)
+                            {
+                                track.Start();
+                            }
+                        }
+                    }
+                }
+                
+                return;
+            }
+            
             var newBeatpack = e.NewValue;
             if (newBeatpack?.Beatmap == null || string.IsNullOrEmpty(newBeatpack.FilePath))
             {
@@ -252,18 +393,36 @@ namespace TypeBeat.Game
             {
                 background?.Expire();
 
-                if (!string.IsNullOrEmpty(newBeatpack.VideoPath) && beatmapAssetStorage.Exists(newBeatpack.VideoPath))
+                // Try to load video (support both new and old formats)
+                string videoPath = newBeatpack.GetVideoPathForBeatmap(newBeatpack.Beatmap);
+                
+                if (!string.IsNullOrEmpty(videoPath))
                 {
-                    background = new Video(beatmapAssetStorage.GetStream(newBeatpack.VideoPath))
+                    Logger.Log($"[MainScreen] Attempting to load video: {videoPath}");
+                    
+                    if (beatmapAssetStorage.Exists(videoPath))
                     {
-                        RelativeSizeAxes = Axes.Both,
-                        FillMode = FillMode.Fill,
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Loop = true, //
-                    };
+                        var videoStream = beatmapAssetStorage.GetStream(videoPath);
+                        if (videoStream != null)
+                        {
+                            Logger.Log($"[MainScreen] Video loaded successfully: {videoPath}");
+                            background = new Video(videoStream)
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                FillMode = FillMode.Fill,
+                                Anchor = Anchor.Centre,
+                                Origin = Anchor.Centre,
+                                Loop = true,
+                            };
+                        }
+                    }
+                    else
+                    {
+                        Logger.Log($"[MainScreen] Video not found in beatpack: {videoPath}");
+                    }
                 }
-                else
+                
+                if (background == null)
                 {
                     // Try to load background image (old format or new format)
                     var textureStore = new TextureStore(host.Renderer, new TextureLoaderStore(beatmapAssetStorage));
@@ -469,10 +628,10 @@ namespace TypeBeat.Game
             Logger.Log($"[MainScreen] AddBackgroundContainer called. Container.Parent = {container.Parent?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
             Logger.Log($"[MainScreen] Container.Child = {container.Child?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);
             
-            if (container.Parent != null)
-                RemoveInternal(container, false);
+            // Only add if not already our child
+            if (container.Parent != this)
+                AddInternal(container);
             
-            AddInternal(container);
             ChangeInternalChildDepth(container, float.MaxValue);
             
             Logger.Log($"[MainScreen] After adding: Container.Parent = {container.Parent?.GetType().Name ?? "null"}", LoggingTarget.Runtime, LogLevel.Important);

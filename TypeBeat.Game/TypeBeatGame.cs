@@ -10,6 +10,7 @@ using TypeBeat.Game.Online;
 using TypeBeat.Game.Editor;
 using TypeBeat.Game.Updates;
 using TypeBeat.Game.Overlays;
+using TypeBeat.Game.Beatmaps;
 using TypeBeat.Resources;
 
 namespace TypeBeat.Game
@@ -18,7 +19,8 @@ namespace TypeBeat.Game
     {
         private ScreenStack screenStack;
         private Storage gameStorage;
-        private LocalBeatpackManager beatpackManager;
+        private LocalBeatpackManager localBeatpackManager;
+        private BeatpackManager globalBeatpackManager;
         private UpdateManager updateManager;
         private UpdateNotificationOverlay updateNotification;
         private TypeBeat.Game.Ui.LoginOverlay loginOverlay;
@@ -37,8 +39,11 @@ namespace TypeBeat.Game
             // Register login overlay for dependency injection
             dependencies.Cache(loginOverlay = new TypeBeat.Game.Ui.LoginOverlay(authService));
             
-            // Register local beatpack manager for dependency injection
-            dependencies.Cache(beatpackManager = new LocalBeatpackManager());
+            // Register global beatpack manager for general gameplay
+            dependencies.Cache(globalBeatpackManager = new BeatpackManager());
+            
+            // Register local beatpack manager for editor
+            dependencies.Cache(localBeatpackManager = new LocalBeatpackManager());
             
             // Register update manager for dependency injection
             dependencies.Cache(updateManager = new UpdateManager());
@@ -60,7 +65,8 @@ namespace TypeBeat.Game
             
             Children = new Drawable[]
             {
-                beatpackManager,
+                globalBeatpackManager,
+                localBeatpackManager,
                 screenStack = new ScreenStack { RelativeSizeAxes = Axes.Both },
                 updateNotification = new UpdateNotificationOverlay(),
                 loginOverlay // Add login overlay as global overlay

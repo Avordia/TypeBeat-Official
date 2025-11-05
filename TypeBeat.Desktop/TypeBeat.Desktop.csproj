@@ -5,8 +5,8 @@
     <AssemblyName>TypeBeat</AssemblyName>
     <ApplicationIcon>TypeBeat.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.0.3</Version>
-    <FileVersion>0.0.3</FileVersion>
+    <Version>0.0.4</Version>
+    <FileVersion>0.0.4</FileVersion>
   </PropertyGroup>
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\TypeBeat.Game\TypeBeat.Game.csproj" />

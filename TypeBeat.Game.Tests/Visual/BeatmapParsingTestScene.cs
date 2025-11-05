@@ -6,7 +6,7 @@ using osu.Framework.Graphics.Sprites;
 using osu.Framework.Testing;
 using osuTK;
 using TypeBeat.Game.Beatmaps;
-using TypeBeat.Game.fileHandling;
+using TypeBeat.Game.Filehandling;
 
 namespace TypeBeat.Game.Tests.Visual
 {
@@ -47,7 +47,7 @@ namespace TypeBeat.Game.Tests.Visual
                 flow.Add(new SpriteText { Text = "Beatmap Metadata:", Font = FontUsage.Default.With(size: 24) });
                 flow.Add(new SpriteText { Text = $"  Title: {beatmap.Title}" });
                 flow.Add(new SpriteText { Text = $"  Artist: {beatmap.Artist}" });
-                flow.Add(new SpriteText { Text = $"  BPM: {beatmap.BPM}" });
+                flow.Add(new SpriteText { Text = $"  BPM: {beatmap.Bpm}" });
                 flow.Add(new SpriteText { Text = $"  Creators: {string.Join(", ", beatmap.Creators)}" });
                 flow.Add(new SpriteText { Text = $"  Source: {beatmap.Source}" });
                 flow.Add(new SpriteText { Text = $"  Tags: {string.Join(", ", beatmap.Tags)}" });

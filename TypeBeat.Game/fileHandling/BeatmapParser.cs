@@ -21,6 +21,9 @@ namespace TypeBeat.Game.Filehandling
         [JsonProperty("background_images")]
         public List<BackgroundInfo> BackgroundImages { get; set; }
         
+        [JsonProperty("video_files")]
+        public List<VideoFileInfo> VideoFiles { get; set; }
+        
         [JsonProperty("custom_sounds")]
         public CustomSoundsConfig CustomSounds { get; set; }
     }
@@ -69,6 +72,9 @@ namespace TypeBeat.Game.Filehandling
                                     Debug.WriteLine($"[BeatmapParser] Successfully parsed beatmap:");
                                     Debug.WriteLine($"[BeatmapParser]    Difficulty: {beatmap.DifficultyName}");
                                     Debug.WriteLine($"[BeatmapParser]    Gamemode:   {beatmap.Gamemode}");
+                                    Debug.WriteLine($"[BeatmapParser]    AudioFilename: {beatmap.AudioFilename ?? "(null)"}");
+                                    Debug.WriteLine($"[BeatmapParser]    CustomSounds.Enabled: {beatmap.CustomSounds?.Enabled.ToString() ?? "(null)"}");
+                                    Debug.WriteLine($"[BeatmapParser]    CustomSounds.TypeNoteSoundpack: {beatmap.CustomSounds?.TypeNoteSoundpack ?? "(null)"}");
                                 }
                                 else
                                 {
@@ -107,16 +113,34 @@ namespace TypeBeat.Game.Filehandling
                             {
                                 beatpack.AudioFiles = manifest.AudioFiles ?? new List<AudioFileInfo>();
                                 beatpack.BackgroundImages = manifest.BackgroundImages ?? new List<BackgroundInfo>();
+                                beatpack.VideoFiles = manifest.VideoFiles ?? new List<VideoFileInfo>();
                                 beatpack.CustomSounds = manifest.CustomSounds ?? new CustomSoundsConfig();
 
                                 // Set legacy paths for backward compatibility with existing consumers
                                 if (beatpack.AudioFiles.Any())
                                     beatpack.MusicPath = beatpack.AudioFiles[0].Path;
-
+                                
                                 if (beatpack.BackgroundImages.Any())
                                     beatpack.BackgroundImagePath = beatpack.BackgroundImages[0].Path;
+                                
+                                if (beatpack.VideoFiles.Any())
+                                    beatpack.VideoPath = beatpack.VideoFiles[0].Path;
 
-                                Debug.WriteLine($"[BeatmapParser] Loaded {beatpack.AudioFiles.Count} audio files, {beatpack.BackgroundImages.Count} backgrounds");
+                                Debug.WriteLine($"[BeatmapParser] Loaded {beatpack.AudioFiles.Count} audio files, {beatpack.BackgroundImages.Count} backgrounds, {beatpack.VideoFiles.Count} videos");
+                                Debug.WriteLine($"[BeatmapParser] Manifest CustomSounds.Enabled: {beatpack.CustomSounds?.Enabled.ToString() ?? "(null)"}");
+                                Debug.WriteLine($"[BeatmapParser] Manifest CustomSounds.TypeNoteSoundpack: {beatpack.CustomSounds?.TypeNoteSoundpack ?? "(null)"}");
+                                
+                                // List all audio files for debugging
+                                foreach (var audioFile in beatpack.AudioFiles)
+                                {
+                                    Debug.WriteLine($"[BeatmapParser]   - Audio: {audioFile.Filename} => {audioFile.Path}");
+                                }
+                                
+                                // List all video files for debugging
+                                foreach (var videoFile in beatpack.VideoFiles)
+                                {
+                                    Debug.WriteLine($"[BeatmapParser]   - Video: {videoFile.Filename} => {videoFile.Path}");
+                                }
                             }
                         }
                     }
@@ -138,7 +162,22 @@ namespace TypeBeat.Game.Filehandling
                         beatpack.BackgroundImagePath = backgroundEntry?.Name;
                     }
 
-                    beatpack.VideoPath = archive.Entries.FirstOrDefault(e => e.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))?.Name;
+                    // OLD FORMAT: Look for video file (check videos folder first, then root)
+                    var videoEntry = archive.Entries.FirstOrDefault(e => 
+                        e.FullName.StartsWith("videos/", StringComparison.OrdinalIgnoreCase) && 
+                        (e.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) || 
+                         e.Name.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)));
+                    
+                    if (videoEntry == null)
+                    {
+                        // Fallback: check root for video files
+                        videoEntry = archive.Entries.FirstOrDefault(e => 
+                            !e.FullName.Contains("/") && 
+                            (e.Name.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) || 
+                             e.Name.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)));
+                    }
+                    
+                    beatpack.VideoPath = videoEntry?.FullName;
 
                     beatpack.KeyPressSoundPath = archive.Entries.FirstOrDefault(e => e.FullName.Equals("hitsounds/key-press.ogg", StringComparison.OrdinalIgnoreCase))?.Name;
                     beatpack.SpacePressSoundPath = archive.Entries.FirstOrDefault(e => e.FullName.Equals("hitsounds/space-press.ogg", StringComparison.OrdinalIgnoreCase))?.Name;

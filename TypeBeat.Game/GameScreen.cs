@@ -387,23 +387,23 @@ namespace TypeBeat.Game
                 {
                     var beatmapAssetStorage = new ZipArchiveResourceStore(stream);
                     var trackStore = audioManager.GetTrackStore(beatmapAssetStorage);
-                    
-                    // Try MusicPath first (old format or manifest-specified path)
+
+                    // Prefer per-beatmap audio filename if provided
+                    var resolvedAudioPath = beatpack.GetAudioPathForBeatmap(beatpack.Beatmap);
+                    if (!string.IsNullOrEmpty(resolvedAudioPath))
+                        gameTrack = trackStore.Get(resolvedAudioPath);
+
+                    // Fallbacks
                     if (!string.IsNullOrEmpty(beatpack.MusicPath))
-                    {
-                        gameTrack = trackStore.Get(beatpack.MusicPath);
-                    }
-                    
-                    // Fallback to audio.mp3 (new format default)
-                    if (gameTrack == null)
-                    {
-                        gameTrack = trackStore.Get("audio.mp3");
-                    }
-                    
+                        gameTrack ??= trackStore.Get(beatpack.MusicPath);
+
+                    gameTrack ??= trackStore.Get("audio.mp3");
+
                     if (gameTrack != null)
                     {
                         gameTrack.Looping = false; // Don't loop gameplay music
-                        Logger.Log($"[GameScreen] Loaded audio track: {beatpack.MusicPath ?? "audio.mp3"}", LoggingTarget.Runtime, LogLevel.Important);
+                        var pathForLog = resolvedAudioPath ?? beatpack.MusicPath ?? "audio.mp3";
+                        Logger.Log($"[GameScreen] Loaded audio track: {pathForLog}", LoggingTarget.Runtime, LogLevel.Important);
                     }
                     else
                     {
@@ -433,10 +433,7 @@ namespace TypeBeat.Game
                         }
                         
                         // Fallback to cover.jpg (new format)
-                        if (entry == null)
-                        {
-                            entry = archive.GetEntry("cover.jpg");
-                        }
+                        entry ??= archive.GetEntry("cover.jpg");
                         
                         if (entry != null)
                         {
@@ -1071,7 +1068,9 @@ namespace TypeBeat.Game
 
             disposeCustomSampleResources();
 
-            if (beatpack?.CustomSounds?.Enabled != true)
+            // Prefer beatmap-level custom sounds when available
+            var cfg = beatpack?.Beatmap?.CustomSounds ?? beatpack?.CustomSounds;
+            if (cfg?.Enabled != true)
                 return;
 
             try

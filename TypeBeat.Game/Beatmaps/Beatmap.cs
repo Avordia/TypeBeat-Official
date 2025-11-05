@@ -5,10 +5,8 @@ namespace TypeBeat.Game.Beatmaps
 {
     public class Beatmap
     {
-        // --- ADDED ---
         [JsonProperty("beatmap_id")]
         public string? OnlineBeatmapID { get; set; } // Null for drafts
-        // --- END ADD ---
         
         [JsonProperty("Title")]
         public string Title { get; set; }
@@ -55,6 +53,10 @@ namespace TypeBeat.Game.Beatmaps
         public string? Video { get; set; }
         
         // These index fields may be set when reading from a beatpack manifest
+    // New: prefer filename over index
+    [JsonProperty("audio")]
+    public string AudioFilename { get; set; }
+
         [JsonProperty("audio_index")]
         public int? AudioIndex { get; set; }
         
@@ -63,6 +65,10 @@ namespace TypeBeat.Game.Beatmaps
 
         [JsonProperty("MapData")]
         public List<WordSegment> MapData { get; set; } = new List<WordSegment>();
+
+        // Per-beatmap custom sounds configuration (preferred over pack-level)
+        [JsonProperty("custom_sounds")]
+        public CustomSoundsConfig CustomSounds { get; set; }
 
         [JsonIgnore]
         public string BeatmapFileName { get; set; }

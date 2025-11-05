@@ -115,6 +115,11 @@ namespace TypeBeat.Game
             base.OnEntering(e);
             this.FadeInFromZero(300);
             
+            // Log gamemode and custom soundpack selection for diagnostics
+            var mode = beatmap?.Gamemode ?? "(null)";
+            var tnPack = beatmap?.CustomSounds?.TypeNoteSoundpack ?? "(none)";
+            osu.Framework.Logging.Logger.Log($"[LoadingScreen] Beatmap Gamemode={mode}, TypeNotePack={tnPack}", osu.Framework.Logging.LoggingTarget.Runtime, osu.Framework.Logging.LogLevel.Important);
+
             // Start fake loading animation
             Schedule(() => simulateLoading());
         }

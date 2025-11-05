@@ -65,15 +65,23 @@ namespace TypeBeat.Game.Gameplay.Scheduling
         }
 
         /// <summary>
-        /// Notify the current note to disappear (called when player hits it).
+        /// Notify the current note to disappear (called when player hits it) with a known judgement.
         /// </summary>
-        public void HitCurrentNote()
+        public void HitCurrentNote(TypeBeat.Game.Gameplay.Judgement.JudgementType judgement)
         {
             if (currentNoteIndex < activeNotes.Count)
             {
-                activeNotes[currentNoteIndex].OnHit();
+                activeNotes[currentNoteIndex].OnHit(judgement);
                 currentNoteIndex++;
             }
+        }
+
+        /// <summary>
+        /// Backward-compatible hit without explicit judgement.
+        /// </summary>
+        public void HitCurrentNote()
+        {
+            HitCurrentNote(TypeBeat.Game.Gameplay.Judgement.JudgementType.Good100);
         }
 
         protected override void Update()

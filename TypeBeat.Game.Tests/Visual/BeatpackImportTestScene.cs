@@ -7,7 +7,7 @@ using osu.Framework.Platform;
 using osu.Framework.Testing;
 using osuTK;
 using osuTK.Graphics;
-using TypeBeat.Game.fileHandling; 
+using TypeBeat.Game.Filehandling;
 
 namespace TypeBeat.Game.Tests.Visual
 {
@@ -33,30 +33,29 @@ namespace TypeBeat.Game.Tests.Visual
             };
             Add(flow);
 
-            AddStep("Import beatpacks using importer", () =>
+            AddStep("Import beatpack using importer", () =>
             {
                 flow.Clear();
 
-                string sourceFolderPath = @"C:\Users\ACER\Desktop\beatmap";
+                // Provide a direct path to a .tbbp file for this simple visual test
+                string beatpackFilePath = @"C:\Users\ACER\Desktop\beatmap\example.tbbp";
 
-                try
+                if (!System.IO.File.Exists(beatpackFilePath))
                 {
-                    int importCount = BeatpackImporter.ImportFromFolder(gameStorage, sourceFolderPath);
-
-                    if (importCount > 0)
-                    {
-                        flow.Add(new SpriteText { Text = $"Successfully imported {importCount} new beatpack(s)!", Colour = Colour4.Green });
-                    }
-                    else
-                    {
-                        flow.Add(new SpriteText { Text = "No new beatpacks were found to import.", Colour = Colour4.Yellow });
-                    }
-
-                    flow.Add(new SpriteText { Text = $"\nBeatpacks are located in: {gameStorage.GetStorageForDirectory("Songs").GetFullPath(".")}" });
+                    flow.Add(new SpriteText { Text = "ERROR: .tbbp file not found! Check path.", Colour = Colour4.Red });
+                    return;
                 }
-                catch (DirectoryNotFoundException ex)
+
+                var importer = new BeatpackImporter();
+                var beatpack = importer.Import(beatpackFilePath);
+
+                if (beatpack != null)
                 {
-                    flow.Add(new SpriteText { Text = $"ERROR: {ex.Message}", Colour = Colour4.Red });
+                    flow.Add(new SpriteText { Text = $"Successfully imported beatpack: {System.IO.Path.GetFileName(beatpackFilePath)}", Colour = Colour4.Green });
+                }
+                else
+                {
+                    flow.Add(new SpriteText { Text = "Import returned null beatpack.", Colour = Colour4.Red });
                 }
             });
         }

@@ -3,11 +3,13 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
+using osu.Framework.Graphics.Shapes;
 using osuTK;
 using TypeBeat.Game.Beatmaps;
 using TypeBeat.Game.Gameplay.Layout;
 using TypeBeat.Game.Gameplay.Appearance;
 using osu.Framework.Logging;
+using TypeBeat.Game.Gameplay.Judgement;
 
 namespace TypeBeat.Game.Gameplay.Objects
 {
@@ -118,12 +120,50 @@ namespace TypeBeat.Game.Gameplay.Objects
         }
 
         /// <summary>
-        /// Called when the note is hit.
+        /// Called when the note is hit with a known judgement.
         /// </summary>
-        public void OnHit()
+        public void OnHit(JudgementType judgement)
         {
             wasHit = true;
-            this.FadeOut(100, Easing.Out).Expire();
+
+            var tint = judgement switch
+            {
+                JudgementType.Perfect300 => Colour4.Cyan,
+                JudgementType.Great200 => Colour4.Lime,
+                JudgementType.Good100 => Colour4.Yellow,
+                JudgementType.Meh50 => Colour4.Orange,
+                _ => Colour4.Red,
+            };
+            noteSprite.Colour = tint;
+
+            var burst = new Circle
+            {
+                Anchor = Anchor.TopLeft,
+                Origin = Anchor.Centre,
+                Size = new Vector2(12),
+                Colour = tint,
+                Alpha = 0.6f,
+                Position = InternalChild.Position
+            };
+            AddInternal(burst);
+            burst.ScaleTo(1f, 0)
+                 .Then()
+                 .ScaleTo(4f, 220, Easing.OutQuint)
+                 .FadeOut(220, Easing.OutQuint)
+                 .Finally(_ => burst.Expire());
+
+            // Float up and fade
+            this.ScaleTo(1.0f, 0)
+                .Then()
+                .ScaleTo(0.92f, 120, Easing.OutQuint);
+
+            InternalChild.MoveToOffset(new Vector2(0, -24), 160, Easing.OutQuint);
+            this.FadeOut(160, Easing.OutQuint).Expire();
+        }
+
+        public void OnHit()
+        {
+            OnHit(JudgementType.Good100);
         }
 
         protected override void Update()

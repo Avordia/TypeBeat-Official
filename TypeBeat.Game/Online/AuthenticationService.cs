@@ -18,6 +18,22 @@ namespace TypeBeat.Game.Online
 
         public bool IsLoggedIn => CurrentUser.Value != null;
 
+        public string GetUserId() => CurrentUser.Value?.Id ?? "";
+        
+        public string GetUsername() => CurrentUser.Value?.Username ?? "Guest";
+        
+        public string GetAccessToken()
+        {
+            try
+            {
+                return BackendClient.Client?.Auth?.CurrentSession?.AccessToken ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
         public async Task<(bool success, string message)> LoginAsync(string usernameOrEmail, string password)
         {
             try
