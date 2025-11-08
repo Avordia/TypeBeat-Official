@@ -322,62 +322,13 @@ namespace TypeBeat.Game
 
         private void beatpackChanged(ValueChangedEvent<Beatpack> e)
         {
-            // Don't update background if MainScreen is suspended (e.g., SongSelectionScreen is active)
-            // SongSelectionScreen borrows the backgroundContainer
-            if (this.GetChildScreen() != null)
-            {
-                Logger.Log("[MainScreen] Skipping background update - screen is suspended", LoggingTarget.Runtime, LogLevel.Important);
-                
-                // Still update the track and song title
-                var beatpack = e.NewValue;
-                if (beatpack?.Beatmap != null && !string.IsNullOrEmpty(beatpack.FilePath))
-                {
-                    var songTitle = beatpack.Beatmap?.Title;
-                    var songArtist = beatpack.Beatmap?.Artist;
-                    songTitleText.Text = string.Join(" - ", new[] { songArtist, songTitle }.Where(s => !string.IsNullOrEmpty(s)));
-                    
-                    var beatpackPath = beatpack.FilePath;
-                    using (var stream = File.OpenRead(beatpackPath))
-                    using (var beatmapAssetStorage = new ZipArchiveResourceStore(stream))
-                    {
-                        track?.Stop();
-                        var trackStore = audioManager.GetTrackStore(beatmapAssetStorage);
-                        
-                        // Try MusicPath first (old format or manifest-specified path)
-                        if (!string.IsNullOrEmpty(beatpack.MusicPath))
-                        {
-                            track = trackStore.Get(beatpack.MusicPath);
-                        }
-                        
-                        // Fallback to audio.mp3 (new format default)
-                        if (track == null)
-                        {
-                            track = trackStore.Get("audio.mp3");
-                        }
-                        
-                        if (track != null)
-                        {
-                            track.Looping = true;
-                            mainLogo.SetTrack(track);
-                            
-                            // Only auto-start if we should (i.e., if MainScreen is active)
-                            if (shouldAutoPlayTrack)
-                            {
-                                track.Start();
-                            }
-                        }
-                    }
-                }
-                
-                return;
-            }
-            
             var newBeatpack = e.NewValue;
             if (newBeatpack?.Beatmap == null || string.IsNullOrEmpty(newBeatpack.FilePath))
             {
                 track?.Stop();
-                background?.Expire();
-                backgroundContainer.Child = new Box { RelativeSizeAxes = Axes.Both, Colour = Colour4.Black };
+                // Don't expire - just replace the child to avoid parent conflicts
+                background = new Box { RelativeSizeAxes = Axes.Both, Colour = Colour4.Black };
+                backgroundContainer.Child = background;
 
                 songTitleText.Text = string.Empty;
                 return;
@@ -391,7 +342,8 @@ namespace TypeBeat.Game
             using (var stream = File.OpenRead(fullPath))
             using (var beatmapAssetStorage = new ZipArchiveResourceStore(stream))
             {
-                background?.Expire();
+                // Don't expire - we'll replace via Child assignment to avoid parent conflicts
+                background = null;
 
                 // Try to load video (support both new and old formats)
                 string videoPath = newBeatpack.GetVideoPathForBeatmap(newBeatpack.Beatmap);

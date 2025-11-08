@@ -52,7 +52,10 @@ namespace TypeBeat.Game
         private double currentHealth = 1.0; // Health from 0.0 to 1.0 (100%)
         private const double max_health = 1.0;
         private const double health_drain_rate = 0.018; // Health drain per second (slightly reduced from 0.02)
+        private const double health_drain_rate_inactive = 0.003; // Much slower drain when no notes (1/6th of normal)
         private double lastHealthDrainTime = 0;
+        private double lastNoteActivityTime = 0; // Track when last note was active
+        private const double inactivityThresholdMs = 2000; // Slow drain after 2 seconds of no notes
         private readonly Ui.CentralWordContainer centralWord;
         private readonly Ui.WordPreviews wordPreviews;
         private readonly Container playfield;
@@ -880,10 +883,43 @@ namespace TypeBeat.Game
 
             // Passive health drain over time (osu! style)
             double now = Clock.CurrentTime;
+            double nowRel = now - gameplayStartClockMs;
+            if (nowRel < 0) nowRel = 0;
+            
+            // Check if there are any active notes within the inactivity threshold
+            bool hasActiveNotes = false;
+            if (currentSegmentIndex < segmentsArr.Length && segmentsArr[currentSegmentIndex]?.Notes != null)
+            {
+                var currentSegment = segmentsArr[currentSegmentIndex];
+                foreach (var note in currentSegment.Notes)
+                {
+                    // Check if note is within range: from StartTime to EndTime + inactivityThreshold
+                    if (nowRel >= note.StartTime - inactivityThresholdMs && nowRel <= note.EndTime + inactivityThresholdMs)
+                    {
+                        hasActiveNotes = true;
+                        lastNoteActivityTime = now;
+                        break;
+                    }
+                }
+            }
+            
+            // If no active notes, check if we're still within the inactivity threshold from last activity
+            if (!hasActiveNotes && lastNoteActivityTime > 0)
+            {
+                double timeSinceLastActivity = now - lastNoteActivityTime;
+                if (timeSinceLastActivity <= inactivityThresholdMs)
+                {
+                    hasActiveNotes = true; // Still within grace period
+                }
+            }
+            
+            // Drain health at different rates depending on note activity
             if (lastHealthDrainTime > 0)
             {
                 double deltaSeconds = (now - lastHealthDrainTime) / 1000.0;
-                currentHealth = Math.Clamp(currentHealth - (health_drain_rate * deltaSeconds), 0.0, max_health);
+                // Use slower drain rate when no active notes
+                double drainRate = hasActiveNotes ? health_drain_rate : health_drain_rate_inactive;
+                currentHealth = Math.Clamp(currentHealth - (drainRate * deltaSeconds), 0.0, max_health);
                 UpdateHealthBar();
                 
                 // Check for fail condition from drain
@@ -896,8 +932,6 @@ namespace TypeBeat.Game
             lastHealthDrainTime = now;
 
             // Auto-miss overdue notes (beyond late window) without key presses
-            double nowRel = Clock.CurrentTime - gameplayStartClockMs;
-            if (nowRel < 0) nowRel = 0;
             int autoMissed = typing.AutoConsumeMisses(nowRel, hitWindows, out bool segCompleted);
             if (autoMissed > 0)
             {
